@@ -487,7 +487,7 @@ var SECTIONS = [
     { type: "step", k: "adMonths", label: "有料媒体と告知サイトの掲載期間", min: 1, max: 12, step: 1, suf: "か月", show: function () { return S.promo.media || S.promo.site; } },
     { type: "campus", show: function () { return S.promo.univ; } },
     { type: "text", k: "univNames", label: "そのほかの大学やキャンパス(読点で区切って入力)", ph: "例 東京都立大学 南大沢キャンパス、学習院大学 目白キャンパス", show: function () { return S.promo.univ; } },
-    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、下の「開催までの準備」の「大学での広告 チラシとポスター」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
+    { type: "univwork", show: function () { return S.promo.univ; } },
     { type: "sites", show: function () { return S.promo.site; } },
     { type: "infl", show: function () { return S.promo.infl; } },
     { type: "reach" }
@@ -592,6 +592,13 @@ function ctl(c) {
         return '<button type="button" class="chip" data-seg="' + c.k + '" data-i="' + i + '" aria-pressed="' + (S[c.k] === o[0]) + '">' + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</button>";
       }).join("") + "</div></div>";
     case "reach": return reachHtml();
+    case "univwork":
+      var nC = univList().length;
+      return '<div class="field"><div class="lab"><span>キャンパスに出すもの(Nativiaが作る)</span>' + (nC ? "<em>" + nC + "キャンパス分</em>" : "") + '</div><div class="chips">' +
+        [["flyer", "チラシとポスター", "1キャンパス " + num(P.d_flyer_univ) + "円"], ["tate", "立て看板", "1キャンパス " + num(P.d_tate_univ) + "円"]].map(function (o) {
+          var on = S.dv[o[0]] === "nv";
+          return '<button type="button" class="chip" data-dv="' + o[0] + '" data-v="' + (on ? "none" : "nv") + '" aria-pressed="' + on + '">' + o[1] + "<small>" + o[2] + "</small></button>";
+        }).join("") + "</div>" + (nC ? "" : '<div class="hint">キャンパスを選ぶと、その数で計算します。選ばないときは1キャンパスで計算します。</div>') + "</div>";
     case "snsads":
       var snN = SNS_ADS.filter(function (m) { return (S.snsAds || {})[m[0]]; }).length;
       var snHead = "(選択中 " + snN + "媒体" + (snsAdTotal() ? "、広告費 計" + yen(snsAdTotal()) : "") + ")";
@@ -653,7 +660,7 @@ function ctl(c) {
       }).join("") + '<div class="hint">掲載料は単価表にあります。掲載時期やプランで変わります。</div></div>';
     case "deliv":
       return DELIV.map(function (g) {
-        return '<div class="field"><div class="lab"><span style="font-weight:700;color:var(--fg)">' + g[0] + "</span></div>" + g[1].filter(function (it) { return !it.show || it.show(); }).map(function (it) {
+        return '<div class="field"><div class="lab"><span style="font-weight:700;color:var(--fg)">' + g[0] + "</span></div>" + g[1].filter(function (it) { return (!it.show || it.show()) && !it.inPromo; }).map(function (it) {
           var v = dvOf(it);
           var chips = [["nv", "Nativia"], ["client", "御社"], ["none", "なし"]].map(function (o) { return '<button type="button" class="chip" data-dv="' + it.k + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("");
           var cnt = it.cnt && v !== "none" && it.auto && it.auto() ? '<div class="hint" style="margin-top:4px">選んだキャンパス(' + it.auto() + "か所)に合わせています</div>" : it.cnt && v !== "none" ? '<div class="step" style="margin-top:4px"><button type="button" data-dcnt="' + it.cnt.k + '" data-d="-1" aria-label="' + it.cnt.label + 'を減らす">−</button><output>' + S[it.cnt.k] + it.cnt.suf + '</output><button type="button" data-dcnt="' + it.cnt.k + '" data-d="1" aria-label="' + it.cnt.label + 'を増やす">+</button></div><span class="hint" style="margin-left:6px">' + it.cnt.label + "</span>" : "";
@@ -829,8 +836,8 @@ var DELIV = [
     { k: "lp", name: "告知ページ", unit: "ページ", pk: "d_lp", def: "none" },
     { k: "form", name: "申込フォームと自動返信", unit: "式", pk: "d_form", def: "none" },
     { k: "visual", name: "告知画像(SNS・Web用)", unit: "点", pk: "d_visual", def: "none", cnt: { k: "visN", label: "画像の数", min: 1, max: 20, step: 1, suf: "点" } },
-    { k: "flyer", name: "大学での広告 チラシとポスターの制作(デザインと印刷)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
-    { k: "tate", name: "大学での立て看板(デザイン、制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "flyer", inPromo: true, show: function () { return S.promo.univ; }, name: "大学での広告 チラシとポスターの制作(デザインと印刷)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "tate", inPromo: true, show: function () { return S.promo.univ; }, name: "大学での立て看板(デザイン、制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
     { k: "sns", name: "SNSの告知投稿", unit: "投稿", pk: "d_sns", def: "none", cnt: { k: "posts", label: "投稿の数", min: 1, max: 40, step: 1, suf: "投稿" } },
     { k: "apps", name: "申込者の管理(問い合わせ対応、リマインド、参加確定の連絡)", unit: "20人", pk: "d_apps", def: "none", qty: function () { return Math.ceil(S.apps / 20); }, cnt: { k: "apps", label: "申込者の見込み", min: 10, max: 1000, step: 10, suf: "人" } },
     { k: "screen", name: "書類選考", unit: "件", pk: "d_screen", def: "none", qty: function () { return S.apps; }, show: function () { return S.format === "biz"; } }
@@ -935,6 +942,7 @@ function compute() {
   DELIV.forEach(function (g) { g[1].forEach(function (it) {
     if (it.show && !it.show()) return;
     var v = dvOf(it);
+    if (it.inPromo && v === "none") return;
     if (v === "client") byClient.push(it.name.replace(/\(.*\)$/, ""));
     var qty = it.qty ? it.qty() : it.cnt ? S[it.cnt.k] : 1;
     if (v !== "nv") { prep.push({ name: it.name, qty: qty, unit: it.unit, price: P[it.pk], amt: 0, skip: v === "client" ? "御社で実施" : "今回は発注なし", full: qty * P[it.pk], note: "" }); return; }
