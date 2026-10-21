@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nativia 見積書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@600;700&display=swap">
+<style>
+/* Layout: 左に選ぶだけの入力パネル、右に印刷できるA4の見積書。スマホでは「入力」「見積書」をタブで切り替える */
+:root {
+  --bg: #f3f5fb;
+  --panel: #ffffff;
+  --fg: #141a33;
+  --muted: #5d6585;
+  --line: #dde2f0;
+  --accent: #1f3cf0;
+  --accent-soft: #e6eaff;
+  --accent-fg: #ffffff;
+  --warn: #b5470f;
+  --warn-soft: #fdeee4;
+  --paper: #ffffff;
+  --ink: #111526;
+  --ink-muted: #5a607a;
+  --rule: #c9cfe2;
+  --font-ui: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --font-title: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1324; --panel: #171c33; --fg: #e8ebf7; --muted: #9aa2c4; --line: #2a3150;
+    --accent: #7d8fff; --accent-soft: #232b55; --accent-fg: #0f1324; --warn: #ffab7a; --warn-soft: #3a2418;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1324; --panel: #171c33; --fg: #e8ebf7; --muted: #9aa2c4; --line: #2a3150;
+  --accent: #7d8fff; --accent-soft: #232b55; --accent-fg: #0f1324; --warn: #ffab7a; --warn-soft: #3a2418;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+button, input, select { font: inherit; color: inherit; }
+.app { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 24px; align-items: start; }
+header.top { max-width: 1400px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+header.top h1 { font-size: 18px; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+header.top h1 span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+.btn:focus-visible, .chip:focus-visible, .step button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs { display: none; gap: 6px; max-width: 1400px; margin: 0 auto 12px; }
+.tabs button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+
+/* 入力パネル */
+.form { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sec { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.sec h2 { font-size: 13px; margin: 0; color: var(--accent); letter-spacing: .08em; display: flex; gap: 8px; align-items: baseline; }
+.sec h2 small { color: var(--muted); font-weight: 400; letter-spacing: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lab { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.lab em { font-style: normal; color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13px; line-height: 1.4; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.chip small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.txt, select.sel, input[type="date"] { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; min-width: 0; }
+.step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: max-content; }
+.step button { width: 34px; height: 32px; border: 0; background: var(--bg); cursor: pointer; font-size: 16px; }
+.stepin { width: 56px; border: 0; background: transparent; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; padding: 0 4px; }
+.step output { min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; }
+.hint { font-size: 12px; color: var(--muted); }
+.hint button { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; font-size: 12px; }
+.sub { display: flex; flex-wrap: wrap; gap: 10px 18px; padding-left: 10px; border-left: 2px solid var(--accent-soft); }
+details.prices { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+details.prices summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+.ptable { display: grid; grid-template-columns: 1fr 120px; gap: 6px 10px; margin-top: 10px; align-items: center; font-size: 12px; }
+.ptable input { width: 100%; text-align: right; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 4px 6px; font-variant-numeric: tabular-nums; }
+.ptable h3 { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; color: var(--accent); }
+
+/* 右側 */
+.right { position: sticky; top: env(safe-area-inset-top, 0px); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* 広い画面では見積書のプレビューを入力欄と別にスクロールさせる */
+@media (min-width: 961px) { .right { top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; } .right > * { flex-shrink: 0; } }
+.internal { background: var(--warn-soft); border: 1px dashed var(--warn); border-radius: 12px; padding: 12px 16px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+.internal b { color: var(--warn); }
+.internal .t { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.paperwrap { overflow-x: auto; border-radius: 4px; }
+
+/* 見積書(紙なので両テーマで同じ色) */
+.paper {
+  background: var(--paper); color: var(--ink); width: 794px; min-height: 1123px; margin: 0 auto; padding: 56px 60px;
+  box-shadow: 0 1px 2px rgba(17,21,38,.08), 0 12px 32px rgba(17,21,38,.12); font-size: 11.5px; line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+.paper h1 { font-family: var(--font-title); font-size: 28px; letter-spacing: .6em; text-align: center; margin: 0 0 22px; padding-left: .6em; }
+.meta { display: flex; justify-content: flex-end; gap: 18px; font-size: 11px; color: var(--ink-muted); margin-bottom: 18px; }
+.head { display: grid; grid-template-columns: 1fr 260px; gap: 24px; align-items: start; }
+.to { font-size: 15px; border-bottom: 1.5px solid var(--ink); padding-bottom: 4px; font-weight: 700; }
+.to small { display: block; font-size: 11.5px; font-weight: 400; }
+.lead { margin: 12px 0 14px; }
+.totalbox { display: flex; align-items: baseline; justify-content: space-between; border: 1.5px solid var(--ink); padding: 10px 14px; }
+.totalbox span { font-size: 12px; }
+.totalbox strong { font-size: 22px; letter-spacing: .02em; }
+.from { font-size: 11px; line-height: 1.7; }
+.from .co { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.logo { display: inline-grid; place-items: center; width: 22px; height: 22px; background: #1f3cf0; color: #fff; font-size: 12px; font-weight: 700; border-radius: 3px; }
+.blk { margin-top: 18px; }
+.blk h3 { font-size: 11.5px; margin: 0 0 6px; padding: 3px 8px; background: #eef1fb; border-left: 3px solid #1f3cf0; }
+.kv { display: grid; grid-template-columns: 92px 1fr; gap: 3px 10px; padding: 0 8px; }
+.kv dt { color: var(--ink-muted); }
+.kv dd { margin: 0; }
+table.items { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+table.items th { font-weight: 500; font-size: 10.5px; color: var(--ink-muted); border-bottom: 1px solid var(--ink); padding: 4px 6px; text-align: left; }
+table.items td { border-bottom: 1px solid var(--rule); padding: 5px 6px; vertical-align: top; }
+table.items .n { text-align: right; white-space: nowrap; }
+table.items tr.grp td { background: #f6f7fc; font-weight: 700; border-bottom: 1px solid var(--rule); }
+table.items tr.grp td .n { font-weight: 700; }
+table.items td.note { color: var(--ink-muted); font-size: 10px; }
+.sums { display: grid; grid-template-columns: 1fr 150px; width: 300px; margin: 10px 0 0 auto; gap: 3px 0; }
+.sums div:nth-child(odd) { color: var(--ink-muted); }
+.sums div:nth-child(even) { text-align: right; }
+.sums .g { font-weight: 700; color: var(--ink) !important; border-top: 1.5px solid var(--ink); padding-top: 4px; font-size: 13px; }
+.notes { padding: 0 8px; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.notes li::before { content: "・"; }
+table.basis td:nth-child(2) { white-space: nowrap; text-align: right; }
+table.basis td:nth-child(3) { color: var(--ink); font-size: 10.5px; }
+.paper .sub { display: block; text-align: center; font-size: 11px; color: var(--ink-muted); margin: -14px 0 18px; border: 0; padding: 0; }
+
+@media (max-width: 960px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .tabs { display: flex; }
+  .right { position: static; }
+  .app[data-view="form"] .right { display: none; }
+  .app[data-view="paper"] .form { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) { .chip { transition: background-color .12s, border-color .12s; } }
+.share { max-width: 1400px; margin: 0 auto 16px; background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.share[hidden] { display: none; }
+.share .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.share input { flex: 1 1 300px; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; font-size: 12px; }
+.msg { font-size: 12px; color: var(--muted); }
+.vonly { display: none; }
+html.viewer .vonly { display: inline-block; }
+html.viewer .tonly, html.viewer .tabs, html.viewer .form, html.viewer .internal, html.viewer #flowBox, html.viewer #listBox { display: none !important; }
+.ltable { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.ltable th { text-align: left; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); padding: 4px 6px; white-space: nowrap; }
+.ltable td { border-bottom: 1px solid var(--line); padding: 6px; vertical-align: top; }
+.ltable td.n { text-align: right; white-space: nowrap; }
+.lwrap { overflow-x: auto; }
+html.reviewing .actions, html.reviewing .tabs, html.reviewing .form, html.reviewing .internal { display: none !important; }
+html.reviewing .app { grid-template-columns: minmax(0, 1fr); }
+html.reviewing .right { position: static; display: flex !important; max-height: none; overflow: visible; }
+.steps { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.steps span { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.steps span.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.checks { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.checks li.warn::before { content: "要確認 "; color: var(--warn); font-weight: 700; }
+.checks li.info::before { content: "お知らせ "; color: var(--muted); font-weight: 700; }
+html.viewer .app { grid-template-columns: minmax(0, 1fr); }
+html.viewer .right { position: static; display: flex !important; max-height: none; overflow: visible; }
+@media print {
+  .right { max-height: none !important; overflow: visible !important; }
+  @page { size: A4; margin: 0; }
+  body { background: #fff; padding: 0; }
+  header.top, .tabs, .form, .internal { display: none !important; }
+  .app { display: block; }
+  .right { position: static; display: block !important; }
+  .paper { box-shadow: none; margin: 0; width: 210mm; min-height: 297mm; }
+  #basis { break-before: page; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1><span class="tonly" style="margin:0;font-size:inherit;color:inherit;font-weight:inherit">Nativia 見積ツール</span><span class="vonly" style="margin:0;font-size:inherit;color:inherit;font-weight:inherit">株式会社Nativia 御見積書</span><span class="tonly">選ぶだけで見積書ができあがります</span></h1>
+  <div class="actions">
+    <button class="btn primary tonly" id="reviewBtn" type="button">見積書を確認する</button>
+    <button class="btn tonly" id="listBtn" type="button">発行した見積の一覧</button>
+    <button class="btn primary vonly" id="pdfBtn" type="button">PDFで保存</button>
+    <button class="btn tonly" id="copyBtn" type="button">Markdownでコピー</button>
+    <button class="btn tonly" id="mdBtn" type="button">Markdownで保存</button>
+    <button class="btn tonly" id="nextNo" type="button">次の見積番号にする</button>
+    <button class="btn tonly" id="resetBtn" type="button">入力を最初に戻す</button>
+    <button class="btn primary" id="printBtn" type="button" hidden>印刷</button>
+  </div>
+</header>
+<div class="share" id="flowBox" hidden></div>
+<div class="share" id="listBox" hidden></div>
+<div class="msg" id="pdfMsg" style="max-width:1400px;margin:0 auto 12px" hidden></div>
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" id="tabForm" aria-selected="true">入力</button>
+  <button type="button" role="tab" id="tabPaper" aria-selected="false">見積書と根拠</button>
+</div>
+<div class="app" id="app" data-view="form">
+  <form class="form" id="form" autocomplete="off"></form>
+  <div class="right">
+    <div class="internal" id="internal"></div>
+    <div class="paperwrap"><div class="paper" id="paper"></div></div>
+    <div class="paperwrap"><div class="paper" id="basis"></div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+var VIEWER_ONLY = true;
+var SHEET_URL = "";
+var SHEET_ID = "";
+var VIEWER_URL = "https://harutokishiking-maker.github.io/nativia-quote/";
+"use strict";
+
+/* ---------- 単価表(仮置きを含む。画面下の「単価表」で変更でき、このブラウザに保存される) ---------- */
+var PRICE_DEFS = [
+  ["開催までの準備", [
+    ["d_plan", "企画書(お題の設計、ビジュアル資料、定例ミーティングを含む)", 200000],
+    ["d_runbook", "当日の進行表と台本(1日)", 50000],
+    ["d_rules", "募集要項と参加規定", 30000],
+    ["d_lp", "告知ページ", 150000],
+    ["d_form", "申込フォームと自動返信", 20000],
+    ["d_visual", "告知画像(1点)", 10000],
+    ["d_univ_design", "大学での広告チラシと立て看板のデザイン", 30000],
+    ["d_flyer_univ", "大学での広告チラシ(1キャンパス)", 15000],
+    ["d_tate_univ", "大学での立て看板(1キャンパス)", 50000],
+    ["d_sns", "SNSの告知投稿(1投稿)", 5000],
+    ["d_apps", "申込者の管理(20人ごと)", 10000],
+    ["d_screen", "書類選考(1件)", 1000],
+    ["d_themeSlides", "お題の説明スライド", 50000],
+    ["d_guide", "参加者向けのしおり(電子)", 30000],
+    ["d_brief", "事前説明会(1回)", 50000],
+    ["d_ceremony", "開会式と閉会式のスライドと演出", 120000],
+    ["d_op", "オープニングムービー", 100000],
+    ["d_tech", "技術資料やハンズオンの教材", 100000],
+    ["d_criteria", "審査基準と配点表", 50000],
+    ["d_sheets", "審査シートと集計表", 20000],
+    ["d_judgeBrief", "審査員とメンターへの説明資料と事前説明(1回)", 30000]
+  ]],
+  ["当日の運営と開催後", [
+    ["review_pp", "評価レポート(参加者1人あたり)", 5000],
+    ["follow", "開催後の採用フォロー", 200000],
+    ["mentor", "ビジコン 本選までのメンタリングと中間発表", 300000],
+    ["movie", "撮影と当日編集のエンディングムービー", 150000],
+    ["rate", "当日スタッフの時給", 1500],
+    ["extra_h", "当日スタッフの準備と片付け(1日あたりの時間)", 2],
+    ["ratio_venue", "会場係1人あたりの参加者数", 20],
+    ["ratio_photo", "撮影・SNS係1人あたりの参加者数", 10],
+    ["club_ad", "学生団体への告知(1団体)", 20000]
+  ]],
+  ["学生向けの有料媒体(1回の告知)", [
+    ["m_onecareer_init", "ONE CAREER(ワンキャリア) 初期費用", 400000],
+    ["m_onecareer_month", "ONE CAREER(ワンキャリア) 月額(ライトプラン)", 100000],
+    ["m_mynavi", "マイナビ インターンシップ", 800000],
+    ["m_rikunabi", "リクナビ インターンシップ", 300000],
+    ["m_wantedly_month", "Wantedly 月額(ライトプラン・最短6か月)", 65000],
+    ["m_paiza", "paiza新卒", 0],
+    ["m_bizcon_free", "ビジコンDB 無料掲載", 0],
+    ["m_bizcon_light", "ビジコンDB 広告ライト(月額)", 50000],
+    ["m_bizcon_premium", "ビジコンDB 広告プレミアム(月額)", 100000],
+    ["m_toryumon_free", "登竜門 無料掲載", 0],
+    ["m_toryumon_pickup", "登竜門 注目プラン", 200000],
+    ["m_koubo_new", "公募ガイドONLINE おすすめ新着(2週間)", 100000]
+  ]],
+  ["イベント告知サイト(1回の告知)", [
+    ["s_connpass", "connpass", 0],
+    ["s_techplay", "TECH PLAY", 0],
+    ["s_peatix", "Peatix(無料イベント)", 0],
+    ["s_doorkeeper_month", "Doorkeeper 月額", 1650]
+  ]],
+  ["食事・会場", [
+    ["breakfast", "朝食(1人1回)", 800],
+    ["lunch", "昼食(1人1回)", 1000],
+    ["dinner", "夕食(1人1回)", 1500],
+    ["snack", "軽食と飲み物(1人1日)", 500],
+    ["party", "懇親会(1人)", 3000],
+    ["venue_unknown", "会場未定のときの目安(1日)", 300000]
+  ]],
+  ["機材", [
+    ["eq_proj", "プロジェクターとスクリーン(1日)", 20000],
+    ["eq_audio", "ワイヤレスマイクとスピーカー(1日)", 30000],
+    ["eq_light", "ステージ照明(1日)", 50000],
+    ["eq_wifi", "ポケットWi-Fi(1台1日)", 3000],
+    ["eq_power", "Nativiaの備品 延長コードと電源タップ(1チーム1セット・1回)", 700],
+    ["eq_pc", "貸し出しパソコン(1台1日)", 10000],
+    ["eq_monitor", "外部モニター(1台1日)", 5000],
+    ["eq_stream", "配信機材(1日)", 80000],
+    ["eq_nuboard", "Nativiaの備品 ヌーボード(1チーム・1回)", 300],
+    ["eq_stationery", "消耗品 模造紙・付箋・ペン(1人)", 300],
+    ["eq_desk", "追加の机と椅子(1日)", 30000],
+    ["eq_first", "救急箱(一式)", 3000]
+  ]],
+  ["制作物", [
+    ["pr_name", "名札とネックストラップ(1人)", 300],
+    ["pr_sign", "会場の案内表示(一式)", 10000],
+    ["pr_panel", "バックパネル(制作と設営)", 80000],
+    ["pr_cert", "賞状(1チーム)", 2000],
+    ["pr_trophy", "トロフィーや盾(1個)", 15000],
+    ["pr_medal", "メダル(1個)", 1500],
+    ["pr_board", "賞金パネル(1枚)", 10000],
+    ["pr_tshirt", "ノベルティ Tシャツ(1人)", 2500],
+    ["pr_sticker", "ノベルティ ステッカー(1人)", 100],
+    ["pr_tote", "ノベルティ トートバッグ(1人)", 800]
+  ]]
+];
+var P = {};
+PRICE_DEFS.forEach(function (g) { g[1].forEach(function (d) { P[d[0]] = d[2]; }); });
+
+var DEFAULTS = {
+  client: "", dept: "", honor: "御中",
+  issue: todayISO(), validity: 30, issuer: "pre", invoice: "",
+  format: null, mode: null, days: 1, people: 40, team: 4, nights: 0,
+  date: "", times: [{ s: "10:00", e: "18:00" }], dayTab: 0,
+  promoWeeks: 6, promoDays: 42, closeDays: 14,
+  review: false, roleN: { dir: 0, venue: 0, comm: 0, photo: 0, judge: 0, spare: 0 }, adMonths: 1, clubSel: {}, clubOther: "", mediaSel: {}, siteSel: {}, univNames: "", univSel: {}, flyerU: 1, tateU: 1, infl: [], inflNames: "", dvDisc: {}, discAmt: 0, discNote: "", open: {}, tgGrade: {}, tgMajor: {}, tgRole: {}, tgArea: "", tgNote: "", kpiReach: 0, kpiApps: 0, mediaOther: "", mediaOtherCost: 0, venueName: "", venueAddr: "", judgeVenueName: "", judgeVenueCost: 0, partyVenueOther: false, partyVenueName: "", conf: {}, mc: null, follow: false, mentor: false, movie: false,
+  promo: { own: false, ads: false, univ: false, site: false, media: false, infl: false },
+  dv: {}, visN: 1, posts: 1, apps: 20, briefN: 1,
+  adsAmt: null, inflAmt: null,
+  venue: null, venueRate: null,
+  meals: { breakfast: false, lunch: false, dinner: false, snack: false }, party: false, corp: 0, stayRate: 0, stayName: "", stayMode: "pp", stayTotal: 0,
+  p1: 0, p2: 0, p3: 0, spCount: 0, spAmt: 0, award: { trophy: false, medal: false, cert: false },
+  judges: 0, judgeFee: null, travelMode: null, travel: 0, credit: 0,
+  eq: { proj: false, audio: false, light: false, wifi: false, power: false, pc: false, monitor: false, stream: false, nuboard: false, stationery: false, desk: false, first: false },
+  wifiN: 1, pcN: 1, monN: 1,
+  pr: { name: false, sign: false, panel: false, cert: false, board: false, tshirt: false, sticker: false, tote: false },
+  depositOn: null, depositPct: 50, balance: null, note: ""
+};
+var INFL_SNS = ["X", "Instagram", "TikTok", "YouTube", "その他"];
+function inflRows() { return (S.infl || []).filter(function (r) { return r.n.trim() || r.fee > 0; }); }
+function inflFollowers() { return (S.infl || []).reduce(function (t, r) { return t + (r.f || 0); }, 0); }
+function inflDesc(r) { return (r.n.trim() || "未定") + "(" + r.sns + (r.f ? "、フォロワー約" + num(r.f) + "人" : "") + ")"; }
+/* 大学のキャンパスと、通う学生のおおよその人数(2025〜2026年の学部・研究科別の在籍者数をキャンパスに割り振った推計。慶應は大学の公表値)。
+   詳しくは sales/集客チャネルのリーチ_v1.md。[大学, キャンパス, 人数(不明はnull), 通う学生] */
+var CAMPUS = [["東京大学", "駒場", 8500, "1・2年の教養課程"], ["東京大学", "本郷", 18000, "3年以上と大学院"], ["東京大学", "柏", 1800, "大学院のみ"], ["東京科学大学", "大岡山", 4900, "理工系の学部生。大学院生は含まない"], ["東京科学大学", "すずかけ台", null, "大学院が中心"], ["東京科学大学", "湯島", 1500, "医学部と歯学部の学部生"], ["一橋大学", "国立", 6000, "全学部と大半の大学院"], ["一橋大学", "千代田", null, "社会人の大学院生"], ["上智大学", "四谷", 13500, "看護学科以外の全学部と大学院"], ["上智大学", "目白聖母", 300, "看護学科"], ["早稲田大学", "早稲田", 23500, "政経、法、商、教育、社学、国際教養"], ["早稲田大学", "西早稲田", 10700, "理工の3学部と大学院"], ["早稲田大学", "戸山", 7200, "文学部、文化構想学部"], ["早稲田大学", "所沢", 4800, "人間科学部、スポーツ科学部"], ["慶應義塾大学", "三田", 11500, "文系の3・4年と大学院"], ["慶應義塾大学", "日吉", 11400, "多くの学部の1・2年"], ["慶應義塾大学", "湘南藤沢", 4900, "総合政策、環境情報、看護医療"], ["慶應義塾大学", "矢上", 3900, "理工学部の3・4年と大学院"], ["慶應義塾大学", "信濃町", 1200, "医学部"], ["慶應義塾大学", "芝共立", 1100, "薬学部"], ["東京理科大学", "神楽坂", 7200, "理学部、経営学部"], ["東京理科大学", "葛飾", 7300, "工学部、先進工学部、薬学部"], ["東京理科大学", "野田", 6500, "創域理工学部、創域情報学部"], ["明治大学", "和泉", 11500, "文系6学部の1・2年"], ["明治大学", "駿河台", 13000, "文系6学部の3・4年と大学院"], ["明治大学", "生田", 7000, "理工学部、農学部"], ["明治大学", "中野", 3000, "国際日本学部、総合数理学部"], ["青山学院大学", "青山", 14200, "文系7学部。大学院生は含まない"], ["青山学院大学", "相模原", 5900, "理工など4学部。大学院生は含まない"], ["立教大学", "池袋", 15000, "7学部。大学院生は含まない"], ["立教大学", "新座", 5100, "4学部。大学院生は含まない"], ["中央大学", "多摩", 15800, "文系5学部と大学院"], ["中央大学", "茗荷谷", 5900, "法学部"], ["中央大学", "後楽園", 5000, "理工学部と大学院"], ["中央大学", "市ヶ谷田町", 700, "国際情報学部"], ["法政大学", "市ヶ谷", 17000, "8学部と大半の大学院"], ["法政大学", "多摩", 9400, "経済、社会、現代福祉、スポーツ健康"], ["法政大学", "小金井", 5000, "理工系の3学部と大学院"]];
+/* 懇親会は基本的に審査会場と同じ場所で行う。審査会場の入力がなければ、イベントの会場と同じ */
+function partyVenue() {
+  if (S.partyVenueOther) return S.partyVenueName.trim() || "未定";
+  if (S.judgeVenueName.trim()) return "審査会場(" + S.judgeVenueName.trim() + ")";
+  return "審査会場" + (S.venueName && S.venueName.trim() ? "(" + S.venueName.trim() + ")" : "");
+}
+function campKey(c) { return c[0] + " " + c[1] + "キャンパス"; }
+function univList() { return CAMPUS.filter(function (c) { return S.univSel[campKey(c)]; }).map(campKey).concat(listNames(S.univNames)); }
+function campusStudents() { return CAMPUS.reduce(function (t, c) { return t + (S.univSel[campKey(c)] && c[2] ? c[2] : 0); }, 0); }
+var CLUBS = ["KING", "OVAL JAPAN", "GEIL", "東大経営会", "KBC", "Wit", "上智スタートアップサークル"];
+/* 1回の告知の閲覧数のめやす(団体からの聞き取り、2026年10月) */
+var CLUB_VIEWS = { "KING": 100, "OVAL JAPAN": 100, "GEIL": 100, "東大経営会": 200, "KBC": 50, "Wit": 200, "上智スタートアップサークル": 100 };
+function clubViews() { return CLUBS.reduce(function (t, c) { return t + (S.clubSel[c] ? CLUB_VIEWS[c] || 0 : 0); }, 0); }
+function fmtName() { return FORMATS[S.format] || "イベント"; }
+var FORMATS = { idea: "アイデアソン", hack: "ハッカソン", biz: "ビジネスコンテスト" };
+
+var S = load("nv_quote_state13", null) || clone(DEFAULTS);
+if (S.promoDays === undefined && S.promoWeeks) S.promoDays = 7 * S.promoWeeks;
+Object.keys(DEFAULTS).forEach(function (k) { if (S[k] === undefined) S[k] = clone(DEFAULTS[k]); });
+var savedP = load("nv_quote_prices", {});
+Object.keys(savedP).forEach(function (k) { if (k in P) P[k] = savedP[k]; });
+
+/* ---------- 便利関数 ---------- */
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function todayISO() { var d = new Date(); return iso(d); }
+function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function parseISO(s) { var a = (s || "").split("-"); return a.length === 3 ? new Date(+a[0], +a[1] - 1, +a[2]) : null; }
+function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+function jdate(d) { return d ? d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日(" + "日月火水木金土"[d.getDay()] + ")" : "未定"; }
+function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
+function num(n) { return Math.round(n).toLocaleString("ja-JP"); }
+function man(n) { return n >= 10000 && n % 10000 === 0 ? (n / 10000) + "万円" : num(n) + "円"; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+var ROLES = [
+  ["dir", "ディレクター", "全体の判断と進行管理、司会、御社との窓口", function () { return 1; }],
+  ["venue", "会場係", "設営と撤収、受付、会場案内、食事の配布", function () { return Math.max(1, Math.ceil(S.people / Math.max(1, P.ratio_venue))); }],
+  ["comm", "連絡・サポート係", "機材と通信、安全管理と落とし物、オンライン参加者の対応", function () { return S.mode === "対面" ? 1 : 2; }],
+  ["photo", "撮影・SNS係", "写真と動画の撮影、エンディングムービーの編集、SNSでの発信", function () { return Math.max(1, Math.ceil(S.people / Math.max(1, P.ratio_photo))); }],
+  ["judge", "審査係", "メンターと審査員の対応、審査シートの回収と集計", function () { return teams() > 10 ? 2 : 1; }],
+  ["spare", "予備", "急な欠員や混雑する時間帯の応援", function () { return 1; }]
+];
+function roleAuto(r) { return r[3](); }
+function roleCount(r) { return S.roleN[r[0]] != null ? S.roleN[r[0]] : roleAuto(r); }
+function staffN() { return ROLES.reduce(function (a, r) { return a + roleCount(r); }, 0); }
+function roleText() { return ROLES.map(function (r) { return r[1] + roleCount(r) + "人"; }).join("、"); }
+function teams() { return Math.ceil(S.people / Math.max(1, S.team)); }
+function nDays() { return S.days; }
+function syncTimes() { while (S.times.length < nDays()) S.times.push(clone(S.times[S.times.length - 1] || { s: "10:00", e: "19:00" })); if (S.dayTab >= nDays()) S.dayTab = 0; }
+function mins(t) { var a = t.split(":"); return +a[0] * 60 + +a[1]; }
+function dur(i) { var t = S.times[i]; return Math.max(0, (mins(t.e) - mins(t.s)) / 60); }
+function workH(i) { return dur(i) + P.extra_h; }
+function totalWorkH() { var h = 0; for (var i = 0; i < nDays(); i++) h += workH(i); return h; }
+function hfmt(h) { return (Math.round(h * 10) / 10) + "時間"; }
+function depositRate() { return S.depositOn ? Math.min(100, Math.max(0, +S.depositPct || 0)) / 100 : 0; }
+
+/* ---------- 入力フォームの定義 ---------- */
+function opts(arr) { return arr.map(function (x) { return Array.isArray(x) ? x : [x, String(x)]; }); }
+var TIMES = []; for (var h = 7; h <= 22; h++) { TIMES.push(pad(h) + ":00"); if (h < 22) TIMES.push(pad(h) + ":30"); }
+
+var SECTIONS = [
+  { t: "宛先と書類", c: [
+    { type: "text", k: "client", label: "宛先の会社名" },
+    { type: "text", k: "dept", label: "部署・担当者" },
+    { type: "seg", k: "honor", label: "敬称", o: opts(["御中", "様"]) },
+    { type: "row", c: [
+      { type: "date", k: "issue", label: "発行日" },
+      { type: "seg", k: "validity", label: "有効期限", o: opts([[14, "14日"], [30, "30日"], [60, "60日"]]) }
+    ] },
+    { type: "seg", k: "issuer", label: "発行者の名義", o: [["pre", "設立準備中"], ["reg", "登記後"]] },
+    { type: "text", k: "invoice", label: "インボイス登録番号(登録後に入力)", show: function () { return S.issuer === "reg"; }, ph: "T1234567890123" }
+  ] },
+  { t: "イベントの形", c: [
+    { type: "seg", k: "format", label: "形式", o: [["idea", "アイデアソン", "考える"], ["hack", "ハッカソン", "作る"], ["biz", "ビジネスコンテスト", "事業にする"]], onset: applyFormat },
+    { type: "seg", k: "mode", label: "開催方法", o: opts(["対面", "オンライン", "ハイブリッド"]) },
+    { type: "row", c: [
+      { type: "step", k: "days", label: "開催日数", min: 1, max: 7, step: 1, suf: "日" },
+      { type: "step", k: "nights", label: "宿泊", min: 0, max: 6, step: 1, suf: "泊", fmt: function (v) { return v ? v + "泊" : "なし"; } }
+    ] },
+    { type: "text", k: "stayName", label: "宿泊先(名前や場所)", ph: "例 国立オリンピック記念青少年総合センター(東京都渋谷区)", show: function () { return S.nights > 0; } },
+    { type: "seg", k: "stayMode", label: "宿泊費の入れ方", o: [["pp", "1人1泊の料金"], ["total", "合計の金額"]], show: function () { return S.nights > 0; } },
+    { type: "number", k: "stayRate", label: "宿泊費(1人1泊)", suf: "円", show: function () { return S.nights > 0 && S.stayMode !== "total"; } },
+    { type: "number", k: "stayTotal", label: "宿泊費の合計", suf: "円", show: function () { return S.nights > 0 && S.stayMode === "total"; } },
+    { type: "row", c: [
+      { type: "step", k: "people", label: "参加学生の人数", min: 1, max: 500, step: 1, suf: "人", edit: true },
+      { type: "seg", k: "team", label: "1チームの人数", o: opts([[3, "3人"], [4, "4人"], [5, "5人"], [6, "6人"]]) }
+    ] },
+    { type: "info", html: function () { return "チーム数 <em>" + teams() + "チーム</em>"; } }
+  ] },
+  { t: "日程", c: [
+    { type: "date", k: "date", label: "開催日(初日)" },
+    { type: "daytimes" },
+    { type: "relsel", k: "promoDays", label: "告知の開始(目安は6週間前)", unit: 1, min: 7, max: 120, word: "日前", wk: true },
+    { type: "relsel", k: "closeDays", label: "申込の締切", unit: 1, max: 30, word: "日前" },
+    { type: "info", html: function () { return "事前説明会は「開催までの準備」で選びます(開催の1週間前に実施)"; } }
+  ] },
+  { t: "開催までの準備", sub: "成果物ごとに、Nativiaが作るか御社で作るかを選ぶ", c: [
+    { type: "deliv" }
+  ] },
+  { t: "当日の運営と開催後", c: [
+    { type: "toggle", k: "review", label: "評価レポート(参加者ごとの評価と講評)" },
+    { type: "roles" },
+    { type: "info", html: function () { var a = []; for (var i = 0; i < nDays(); i++) a.push((i + 1) + "日目 " + hfmt(workH(i))); return "スタッフの稼働は開催時間に準備と片付けの" + P.extra_h + "時間を足して自動で計算します <em>" + a.join(" / ") + "</em>"; } },
+    { type: "seg", k: "mc", label: "司会", o: [["社内", "Nativiaが担当"], ["御社", "御社で担当"]] },
+    { type: "toggle", k: "movie", label: "撮影と当日編集のエンディングムービー" },
+    { type: "toggle", k: "follow", label: "開催後の採用フォロー" }
+  ] },
+  { t: "ターゲット像", sub: "どんな学生に来てほしいか", c: [
+    { type: "multi", k: "tgGrade", label: "学年", o: [["b1", "学部1年"], ["b2", "学部2年"], ["b3", "学部3年"], ["b4", "学部4年"], ["m", "修士"], ["d", "博士"]] },
+    { type: "multi", k: "tgMajor", label: "専攻", o: [["bun", "文系"], ["ri", "理系"], ["info", "情報系"], ["design", "デザイン系"]] },
+    { type: "multi", k: "tgRole", label: "志望・関心", o: [["eng", "エンジニア"], ["des", "デザイナー"], ["biz", "事業開発・企画"], ["sales", "営業"], ["found", "起業"], ["ai", "AI活用"]] },
+    { type: "text", k: "tgArea", label: "大学や地域(任意)", ph: "例 首都圏の大学、宇都宮大学、北関東" },
+    { type: "text", k: "tgNote", label: "求める人物像(自由に記入)", ph: "例 自分でプロダクトを作った経験があり、スタートアップで早く裁量を持ちたい学生" }
+  ] },
+  { t: "集客と告知", c: [
+    { type: "row", c: [
+      { type: "number", k: "kpiReach", label: "目標の閲覧数(告知を見る人数)", suf: "人" },
+      { type: "number", k: "kpiApps", label: "目標の応募数", suf: "人" }
+    ] },
+    { type: "info", html: function () { return kpiText(true); } },
+    { type: "multi", k: "promo", label: "広告のやり方", o: [["own", "学生団体への告知", "1団体 閲覧 約50〜200人"], ["ads", "SNS広告", "閲覧数は予算と配信設定しだい"], ["univ", "大学での広告", "キャンパスごとの学生数を表示"], ["site", "イベント告知サイト", "利用者数は各サイトを参照"], ["media", "学生向けの有料媒体", "利用者数は各媒体を参照"], ["infl", "インフルエンサー", "閲覧数はその人のフォロワーしだい"]] },
+    { type: "opener", k: "clubs", label: function () { return "告知を出す学生団体を選ぶ(選択中 " + clubNames().length + "団体" + (clubViews() ? "、閲覧 約" + num(clubViews()) + "人" : "") + ")"; }, show: function () { return S.promo.own; } },
+    { type: "multi", k: "clubSel", label: "告知を出す学生団体", o: CLUBS.map(function (c) { return [c, c, "閲覧 約" + num(CLUB_VIEWS[c]) + "人"]; }), show: function () { return S.promo.own && S.open.clubs; } },
+    { type: "text", k: "clubOther", label: "そのほかの学生団体(読点で区切って入力)", ph: "例 ○○大学起業サークル、△△会", show: function () { return S.promo.own && S.open.clubs; } },
+    { type: "seg", k: "adsAmt", label: "SNS広告の予算", o: opts([[50000, "5万円"], [100000, "10万円"], [200000, "20万円"], [300000, "30万円"]]), show: function () { return S.promo.ads; } },
+    { type: "media", show: function () { return S.promo.media; } },
+    { type: "text", k: "mediaOther", label: "そのほかの有料媒体(媒体名を読点で区切って入力)", ph: "例 キャリアバイト、ガクセイ協賛", show: function () { return S.promo.media; } },
+    { type: "number", k: "mediaOtherCost", label: "そのほかの有料媒体の掲載料の合計(未定なら0)", suf: "円", show: function () { return S.promo.media; } },
+    { type: "step", k: "adMonths", label: "有料媒体と告知サイトの掲載期間", min: 1, max: 12, step: 1, suf: "か月", show: function () { return S.promo.media || S.promo.site; } },
+    { type: "campus", show: function () { return S.promo.univ; } },
+    { type: "text", k: "univNames", label: "そのほかの大学やキャンパス(読点で区切って入力)", ph: "例 東京都立大学 南大沢キャンパス、学習院大学 目白キャンパス", show: function () { return S.promo.univ; } },
+    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、上の「開催までの準備」の「大学での広告チラシ」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
+    { type: "sites", show: function () { return S.promo.site; } },
+    { type: "infl", show: function () { return S.promo.infl; } },
+  ] },
+  { t: "会場・食事・宿泊", sub: "実費", c: [
+    { type: "seg", k: "venue", label: "会場", o: [["office", "御社のオフィス"], ["rent", "外部の会場"], ["tbd", "未定(目安)"]] },
+    { type: "text", k: "venueName", label: "御社のオフィスの場所(住所、フロア、部屋)", ph: "例 東京都渋谷区○○1-2-3 ○○ビル10階 セミナールーム", show: function () { return S.venue === "office"; } },
+    { type: "text", k: "venueName", label: "会場の名前", ph: "例 ○○カンファレンスセンター 3階ホール", show: function () { return S.venue === "rent" || S.venue === "tbd"; } },
+    { type: "text", k: "venueAddr", label: "外部の会場の住所", ph: "例 東京都千代田区○○1-2-3", show: function () { return S.venue === "rent"; } },
+    { type: "seg", k: "venueRate", label: "会場の1日の料金", o: opts([[100000, "10万円"], [200000, "20万円"], [300000, "30万円"], [500000, "50万円"]]), show: function () { return S.venue === "rent"; } },
+    { type: "text", k: "judgeVenueName", label: "審査会場(審査を別の場所で行う場合の名前や場所)", ph: "例 御社 本社 会議室A" },
+    { type: "number", k: "judgeVenueCost", label: "審査会場の費用(なしは0)", suf: "円" },
+    { type: "multi", k: "meals", label: "食事(1日あたり)", o: [["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ["snack", "軽食と飲み物"]] },
+    { type: "toggle", k: "party", label: "懇親会(1回)" },
+    { type: "seg", k: "partyVenueOther", label: "懇親会の会場", o: [[false, "審査会場と同じ"], [true, "別の場所"]], show: function () { return S.party; } },
+    { type: "info", html: function () { return "懇親会は " + esc(partyVenue()) + " で行います。"; }, show: function () { return S.party && !S.partyVenueOther; } },
+    { type: "text", k: "partyVenueName", label: "懇親会の会場(名前や場所)", ph: "例 会場近くの○○レストラン", show: function () { return S.party && S.partyVenueOther; } },
+    { type: "step", k: "corp", label: "食事をとる御社の社員", min: 0, max: 50, step: 1, suf: "人" },
+
+  ] },
+  { t: "賞金と審査", sub: "実費", c: [
+    { type: "row", c: [
+      { type: "step", k: "p1", label: "1位", min: 0, max: 1000000, step: 50000, fmt: prizeFmt },
+      { type: "step", k: "p2", label: "2位", min: 0, max: 1000000, step: 50000, fmt: prizeFmt }
+    ] },
+    { type: "row", c: [
+      { type: "step", k: "p3", label: "3位", min: 0, max: 1000000, step: 50000, fmt: prizeFmt },
+      { type: "step", k: "spCount", label: "特別賞の数", min: 0, max: 10, step: 1, suf: "個" }
+    ] },
+    { type: "step", k: "spAmt", label: "特別賞の賞金(1つあたり)", min: 0, max: 1000000, step: 50000, fmt: prizeFmt, show: function () { return S.spCount > 0; } },
+    { type: "multi", k: "award", none: true, label: "賞品・副賞", o: [["trophy", "トロフィーや盾(入賞チームに1つ)"], ["medal", "メダル(入賞チームの全員)"], ["cert", "賞状(入賞チームごと)"]] },
+    { type: "row", c: [
+      { type: "step", k: "judges", label: "外部の審査員・メンター", min: 0, max: 10, step: 1, suf: "人" },
+      { type: "seg", k: "judgeFee", label: "謝礼(1人)", o: opts([[30000, "3万円"], [50000, "5万円"], [100000, "10万円"]]), show: function () { return S.judges > 0; } }
+    ] },
+    { type: "seg", k: "travelMode", label: "参加者の交通費の補助", o: [["none", "なし"], ["cap", "上限あり"], ["free", "上限なし"]] },
+    { type: "number", k: "travel", label: "1人の上限額", suf: "円", show: function () { return S.travelMode === "cap"; } },
+    { type: "number", k: "travel", label: "1人あたりの見込み額(見積の計算に使う)", suf: "円", show: function () { return S.travelMode === "free"; } },
+    { type: "number", k: "credit", label: "AIやクラウドのクレジット(1人あたり。なしは0)", suf: "円" }
+  ] },
+  { t: "Nativiaに借りる機材", sub: "実費。御社や会場で用意できるものは選ばない", c: [
+    { type: "multi", k: "eq", none: true, label: "Nativiaに借りる機材", o: [["proj", "プロジェクターとスクリーン"], ["audio", "マイクとスピーカー"], ["light", "ステージ照明"], ["wifi", "ポケットWi-Fi"], ["power", "延長コードと電源タップ(Nativiaの備品)"], ["pc", "貸し出しパソコン"], ["monitor", "外部モニター"], ["stream", "配信機材"], ["nuboard", "ヌーボード(Nativiaの備品)"], ["stationery", "模造紙・付箋・ペン(消耗品)"], ["desk", "追加の机と椅子"], ["first", "救急箱"]] },
+    { type: "step", k: "wifiN", label: "ポケットWi-Fiの台数", min: 1, max: 20, step: 1, suf: "台", show: function () { return S.eq.wifi; } },
+    { type: "step", k: "pcN", label: "貸し出しパソコンの台数", min: 1, max: 50, step: 1, suf: "台", show: function () { return S.eq.pc; } },
+    { type: "step", k: "monN", label: "外部モニターの台数", min: 1, max: 50, step: 1, suf: "台", show: function () { return S.eq.monitor; } },
+    { type: "info", html: function () { return "スタッフの連絡は協賛のBuddycomを使うため、インカムは計上しません"; } }
+  ] },
+  { t: "制作物", sub: "実費。開催前の資料は電子で配るため含めない", c: [
+    { type: "multi", k: "pr", none: true, label: "Nativiaが用意する制作物", o: [["name", "名札とストラップ"], ["sign", "会場の案内表示"], ["panel", "バックパネル"], ["board", "賞金パネル"], ["tshirt", "Tシャツ"], ["sticker", "ステッカー"], ["tote", "トートバッグ"]] }
+  ] },
+  { t: "金額の確定", sub: "実費の項目ごとに、確定か見込みかと、確定する時期の目安を選ぶ", c: [
+    { type: "confirm" }
+  ] },
+  { t: "支払条件と備考", c: [
+    { type: "number", k: "discAmt", label: "全体からのお値引き(税抜、なしは0)", suf: "円" },
+    { type: "text", k: "discNote", label: "お値引きの理由(見積書に表示、任意)", ph: "例 初回のお取引のため" },
+    { type: "seg", k: "depositOn", label: "着手金", o: [[false, "なし"], [true, "あり"]] },
+    { type: "number", k: "depositPct", label: "着手金の割合(代行費に対して)", suf: "%", show: function () { return S.depositOn; } },
+    { type: "seg", k: "balance", label: "残金の支払期限", o: opts(["開催月の翌月末", "請求から30日以内", "開催日の前日"]) },
+    { type: "text", k: "note", label: "備考(必要なときだけ)", ph: "例 会場は御社で手配いただく想定です" }
+  ] }
+];
+
+function applyFormat() {
+  if (S.format === "idea") { S.days = 1; S.nights = 0; S.times = [{ s: "10:00", e: "18:00" }]; }
+  if (S.format === "hack") { S.days = 2; S.times = [{ s: "10:00", e: "19:00" }, { s: "09:00", e: "18:00" }]; }
+  if (S.format === "biz") { S.days = 1; S.nights = 0; S.team = 4; S.times = [{ s: "13:00", e: "19:00" }]; }
+  S.dayTab = 0; syncTimes();
+}
+function prizeFmt(v) { return v ? man(v) : "なし"; }
+function relLabel(n, unit, word, wk) { var d0 = parseISO(S.date); var w = wk ? (n % 7 ? Math.floor(n / 7) + "週間と" + (n % 7) + "日前" : n / 7 + "週間前") : ""; return n + word + (w ? "(" + w + ")" : "") + (d0 ? " " + jdate(addDays(d0, -n * unit)) : ""); }
+
+/* ---------- フォームの描画 ---------- */
+var form = document.getElementById("form");
+function visible(c) { return !c.show || c.show(); }
+function ctl(c) {
+  if (!visible(c)) return "";
+  var id = c.k ? "f_" + c.k : "";
+  var lab = c.label ? '<div class="lab"><span>' + esc(c.label) + "</span>" + (c.note ? "<em>" + esc(c.note()) + "</em>" : "") + "</div>" : "";
+  switch (c.type) {
+    case "row": return '<div class="row2">' + c.c.map(ctl).join("") + "</div>";
+    case "info": return '<div class="hint">' + c.html() + "</div>";
+    case "text": return '<label class="field" for="' + id + '">' + lab + '<input class="txt" id="' + id + '" data-text="' + c.k + '" value="' + esc(S[c.k]) + '" placeholder="' + esc(c.ph || "") + '"></label>';
+    case "date": return '<label class="field" for="' + id + '">' + lab + '<input type="date" id="' + id + '" data-date="' + c.k + '" value="' + esc(S[c.k]) + '"></label>';
+    case "daytimes":
+      syncTimes();
+      var tabs = ""; for (var i = 0; i < nDays(); i++) tabs += '<button type="button" class="chip" data-daytab="' + i + '" aria-pressed="' + (S.dayTab === i) + '">' + (i + 1) + "日目</button>";
+      var t = S.times[S.dayTab];
+      var tsel = function (which, val) { return '<select class="sel" id="f_t' + which + '" data-time="' + which + '" aria-label="' + (which === "s" ? "開始" : "終了") + '">' + TIMES.map(function (x) { return "<option" + (x === val ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>"; };
+      var dd = parseISO(S.date);
+      return '<div class="field"><div class="lab"><span>日ごとの時間(開始と終了)</span><em>' + (dd ? jdate(addDays(dd, S.dayTab)) : "") + '</em></div><div class="chips">' + tabs + '</div><div class="row2">' + tsel("s", t.s) + tsel("e", t.e) + '</div><div class="hint">開催 ' + hfmt(dur(S.dayTab)) + " / スタッフの稼働 " + hfmt(workH(S.dayTab)) + "(準備と片付けの" + P.extra_h + "時間を含む)</div></div>";
+    case "relsel":
+      var o = ""; for (var n = c.min || 1; n <= c.max; n++) o += '<option value="' + n + '"' + (n === S[c.k] ? " selected" : "") + ">" + relLabel(n, c.unit, c.word, c.wk) + "</option>";
+      return '<label class="field" for="' + id + '">' + lab + '<select class="sel" id="' + id + '" data-rel="' + c.k + '">' + o + "</select></label>";
+    case "number":
+      var nid = id + (c.k === "travel" ? "_" + S.travelMode : "");
+      return '<label class="field" for="' + nid + '">' + lab + '<div style="display:flex;align-items:center;gap:6px"><input class="txt" style="max-width:160px;text-align:right" inputmode="numeric" id="' + nid + '" data-num="' + c.k + '" value="' + esc(S[c.k]) + '"><span>' + esc(c.suf) + "</span></div></label>";
+    case "seg": return '<div class="field" role="group" aria-label="' + esc(c.label) + '">' + lab + '<div class="chips">' + c.o.map(function (o, i) {
+        return '<button type="button" class="chip" data-seg="' + c.k + '" data-i="' + i + '" aria-pressed="' + (S[c.k] === o[0]) + '">' + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</button>";
+      }).join("") + "</div></div>";
+    case "campus":
+      var cN = univList().length, cS = campusStudents();
+      return '<div class="field" role="group" aria-label="広告するキャンパス"><div class="lab"><span>広告するキャンパス</span>' + (cN ? "<em>選択中 " + cN + "か所" + (cS ? "、通う学生 約" + num(cS) + "人" : "") + "</em>" : "") + "</div>" +
+        CAMPUS.reduce(function (a, c) { if (!a.length || a[a.length - 1][0] !== c[0]) a.push([c[0], []]); a[a.length - 1][1].push(c); return a; }, []).map(function (g) {
+          return '<div style="padding:6px 0;border-top:1px solid var(--line)"><div style="font-size:13px;font-weight:700;margin-bottom:4px">' + esc(g[0]) + '</div><div class="chips">' + g[1].map(function (c) {
+            var k = campKey(c);
+            return '<button type="button" class="chip" data-multi="univSel" data-v="' + esc(k) + '" aria-pressed="' + !!S.univSel[k] + '" title="' + esc(c[3]) + '">' + esc(c[1]) + "<small>" + (c[2] ? "約" + num(c[2]) + "人" : "人数は不明") + "</small></button>";
+          }).join("") + "</div></div>";
+        }).join("") + '<div class="hint">人数は、学部や大学院ごとの在籍者数をキャンパスに割り振ったおおよその数です(慶應義塾大学は大学の公表値)。</div></div>';
+    case "multi": return '<div class="field" role="group" aria-label="' + esc(c.label) + '">' + lab + '<div class="chips">' + c.o.map(function (o) {
+        return '<button type="button" class="chip" data-multi="' + c.k + '" data-v="' + o[0] + '" aria-pressed="' + !!S[c.k][o[0]] + '">' + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</button>";
+      }).join("") + (c.none ? '<button type="button" class="chip" data-none="' + c.k + '" aria-pressed="' + !Object.keys(S[c.k]).some(function (k) { return S[c.k][k]; }) + '">なし(未選択)</button>' : "") + "</div></div>";
+    case "toggle": return '<div class="field">' + '<div class="chips"><button type="button" class="chip" data-toggle="' + c.k + '" aria-pressed="' + !!S[c.k] + '">' + (S[c.k] ? "含める " : "含めない ") + "</button><span class=\"hint\" style=\"align-self:center\">" + esc(c.label) + (c.note ? " <em style=\"color:var(--accent);font-style:normal\">" + esc(c.note()) + "</em>" : "") + "</span></div></div>";
+    case "step": return '<div class="field">' + lab + '<div class="step"><button type="button" data-step="' + c.k + '" data-d="-1" aria-label="' + esc(c.label) + 'を減らす">−</button>' + (c.edit ? '<input class="stepin" inputmode="numeric" id="' + id + '" data-stepin="' + c.k + '" value="' + S[c.k] + '" aria-label="' + esc(c.label) + '"><span class="hint" style="padding-right:6px">' + esc(c.suf) + "</span>" : '<output id="' + id + '">' + esc(c.fmt ? c.fmt(S[c.k]) : S[c.k] + c.suf) + "</output>") + '<button type="button" data-step="' + c.k + '" data-d="1" aria-label="' + esc(c.label) + 'を増やす">+</button></div></div>';
+    case "infl":
+      if (!S.infl.length) S.infl.push({ n: "", sns: "X", f: 0, fee: 0 });
+      return '<div class="field"><div class="lab"><span>依頼するインフルエンサー</span>' + (inflFollowers() ? "<em>フォロワー 合計 約" + num(inflFollowers()) + "人</em>" : "") + "</div>" + S.infl.map(function (r, i) {
+        return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px 0;border-top:1px solid var(--line)">' +
+          '<input class="txt" data-infl="' + i + '" data-f="n" value="' + esc(r.n) + '" placeholder="名前(例 ○○さん)" aria-label="' + (i + 1) + '人目の名前">' +
+          '<select class="sel" data-infl="' + i + '" data-f="sns" aria-label="' + (i + 1) + '人目のSNS">' + INFL_SNS.map(function (x) { return "<option" + (x === r.sns ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>" +
+          '<label class="hint" style="display:flex;align-items:center;gap:4px;white-space:nowrap">フォロワー<input class="txt" style="text-align:right;min-width:0" inputmode="numeric" data-infl="' + i + '" data-f="f" value="' + (r.f || "") + '" placeholder="0">人</label>' +
+          '<label class="hint" style="display:flex;align-items:center;gap:4px;white-space:nowrap">依頼料<input class="txt" style="text-align:right;min-width:0" inputmode="numeric" data-infl="' + i + '" data-f="fee" value="' + (r.fee || "") + '" placeholder="未定なら0">円</label>' +
+          (S.infl.length > 1 ? '<div><button type="button" data-infldel="' + i + '">この人を外す</button></div>' : "") + "</div>";
+      }).join("") + '<div><button type="button" class="btn" data-infladd="1">インフルエンサーを追加する</button></div><div class="hint">名前、SNS、フォロワー数は見積書の内訳の備考に載ります。</div></div>';
+    case "sites":
+      var sN = SITES.filter(function (m) { return S.siteSel[m[0]]; }).length;
+      if (!S.open.sites) return '<div class="field"><button type="button" class="btn" data-open="sites" style="text-align:left">告知サイトを選ぶ(選択中 ' + sN + '件)▼</button></div>';
+      return '<div class="field"><button type="button" class="btn" data-open="sites" style="text-align:left">告知サイトの一覧を閉じる(選択中 ' + sN + '件)▲</button>' + SITES.map(function (m) {
+        var on = !!S.siteSel[m[0]];
+        var price = m[2] == null ? "要見積" : "";
+        return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;padding:6px 0;border-top:1px solid var(--line)"><div style="min-width:0;flex:1 1 220px"><div style="font-size:13px">' + esc(m[1]) + ' <b style="color:var(--accent)">' + price + '</b></div>' + (REACH_NOTE[m[0]] ? '<div class="hint">' + esc(REACH_NOTE[m[0]]) + '</div>' : '') + '</div><div class="chips" style="align-self:center"><button type="button" class="chip" data-multi="siteSel" data-v="' + m[0] + '" aria-pressed="' + on + '">' + (on ? "掲載する" : "掲載しない") + "</button></div></div>";
+      }).join("") + "</div>";
+    case "confirm":
+      var qq = compute();
+      if (!qq.cost.length && !qq.tbd.length) return '<div class="hint">実費の項目はありません。</div>';
+      return '<div class="field">' + qq.cost.map(function (x) {
+        var c = confOf(x);
+        var sel = c.fixed ? "" : '<select class="sel" style="max-width:260px" data-when="' + esc(x.name) + '" aria-label="' + esc(x.name) + 'の確定の目安">' + WHEN.map(function (w) { return '<option value="' + w[0] + '"' + (w[0] === c.when ? " selected" : "") + ">" + esc(whenText(w[0])) + "</option>"; }).join("") + "</select>";
+        return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;padding:6px 0;border-top:1px solid var(--line)"><div style="min-width:0;flex:1 1 200px"><div style="font-size:13px">' + esc(x.name) + '</div><div class="hint">' + num(x.amt) + "円</div>" + sel + '</div><div class="chips" style="align-self:center"><button type="button" class="chip" data-fix="' + esc(x.name) + '" data-v="1" aria-pressed="' + c.fixed + '">確定</button><button type="button" class="chip" data-fix="' + esc(x.name) + '" data-v="0" aria-pressed="' + !c.fixed + '">見込み</button></div></div>';
+      }).join("") + (qq.tbd.length ? '<div class="hint" style="padding-top:6px;border-top:1px solid var(--line)">金額が未定 ' + esc(qq.tbd.join("、")) + "(媒体などからの見積の受領時に確定)</div>" : "") + "</div>";
+    case "opener":
+      return '<div class="field"><button type="button" class="btn" data-open="' + c.k + '" style="text-align:left">' + esc(c.label()) + (S.open[c.k] ? " ▲" : " ▼") + "</button></div>";
+    case "media":
+      var mN = MEDIA.filter(function (m) { return S.mediaSel[m[0]]; }).length;
+      if (!S.open.media) return '<div class="field"><button type="button" class="btn" data-open="media" style="text-align:left">掲載する媒体を選ぶ(選択中 ' + mN + '件)▼</button></div>';
+      return '<div class="field"><button type="button" class="btn" data-open="media" style="text-align:left">媒体の一覧を閉じる(選択中 ' + mN + '件)▲</button>' + MEDIA.map(function (m) {
+        var on = !!S.mediaSel[m[0]];
+        var price = m[2] == null ? "要見積" : "";
+        return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;padding:6px 0;border-top:1px solid var(--line)"><div style="min-width:0;flex:1 1 220px"><div style="font-size:13px">' + esc(m[1]) + ' <b style="color:var(--accent)">' + price + '</b></div>' + (REACH_NOTE[m[0]] ? '<div class="hint">' + esc(REACH_NOTE[m[0]]) + '</div>' : '') + '</div><div class="chips" style="align-self:center"><button type="button" class="chip" data-multi="mediaSel" data-v="' + m[0] + '" aria-pressed="' + on + '">' + (on ? "掲載する" : "掲載しない") + "</button></div></div>";
+      }).join("") + '<div class="hint">掲載料は単価表にあります。掲載時期やプランで変わります。</div></div>';
+    case "deliv":
+      return DELIV.map(function (g) {
+        return '<div class="field"><div class="lab"><span style="font-weight:700;color:var(--fg)">' + g[0] + "</span></div>" + g[1].filter(function (it) { return !it.show || it.show(); }).map(function (it) {
+          var v = dvOf(it);
+          var chips = [["nv", "Nativia"], ["client", "御社"], ["none", "なし"]].map(function (o) { return '<button type="button" class="chip" data-dv="' + it.k + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("");
+          var cnt = it.cnt && v !== "none" && it.auto && it.auto() ? '<div class="hint" style="margin-top:4px">選んだキャンパス(' + it.auto() + "か所)に合わせています</div>" : it.cnt && v !== "none" ? '<div class="step" style="margin-top:4px"><button type="button" data-dcnt="' + it.cnt.k + '" data-d="-1" aria-label="' + it.cnt.label + 'を減らす">−</button><output>' + S[it.cnt.k] + it.cnt.suf + '</output><button type="button" data-dcnt="' + it.cnt.k + '" data-d="1" aria-label="' + it.cnt.label + 'を増やす">+</button></div><span class="hint" style="margin-left:6px">' + it.cnt.label + "</span>" : "";
+          var disc = v === "nv" ? '<div style="margin-top:4px"><select class="sel" style="max-width:200px;padding:4px 8px;font-size:12px" data-disc="' + it.k + '" aria-label="' + esc(it.name) + 'の値引き">' + DISCS.map(function (d) { return '<option value="' + d[0] + '"' + ((S.dvDisc[it.k] || 0) === d[0] ? " selected" : "") + ">" + d[1] + "</option>"; }).join("") + "</select></div>" : "";
+          return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 10px;padding:6px 0;border-top:1px solid var(--line)"><div style="min-width:0;flex:1 1 220px"><div style="font-size:13px">' + esc(it.name) + '</div>' + cnt + disc + '</div><div class="chips" style="align-self:center">' + chips + "</div></div>";
+        }).join("") + "</div>";
+      }).join("") + '<div class="hint">メンターと審査員の手配は御社にお願いします。</div>';
+    case "roles":
+      var manual = Object.keys(S.roleN).length > 0;
+      return '<div class="field"><div class="lab"><span>当日の運営スタッフ</span><em>合計 ' + staffN() + "人</em></div>" +
+        ROLES.map(function (r) { return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="min-width:0;flex:1"><b style="font-size:13px">' + r[1] + '</b><div class="hint">' + r[2] + '</div></div><div class="step"><button type="button" data-role="' + r[0] + '" data-d="-1" aria-label="' + r[1] + 'を減らす">−</button><output>' + roleCount(r) + '人</output><button type="button" data-role="' + r[0] + '" data-d="1" aria-label="' + r[1] + 'を増やす">+</button></div></div>'; }).join("") +
+        '<div class="hint">チームの巡回は御社の社員の方にお願いします。' + (manual ? ' <button type="button" data-staffreset="1">参加人数からの目安にする</button>' : "") + "</div></div>";
+  }
+  return "";
+}
+var STEPS = {};
+SECTIONS.forEach(function (s) { (function walk(cs) { cs.forEach(function (c) { if (c.type === "row") walk(c.c); if (c.type === "step") STEPS[c.k] = c; if (c.type === "seg") STEPS["seg_" + c.k] = c; }); })(s.c); });
+
+function renderForm() {
+  var html = SECTIONS.map(function (s) {
+    return '<section class="sec"><h2>' + esc(s.t) + (s.sub ? "<small>" + esc(s.sub) + "</small>" : "") + "</h2>" + s.c.map(ctl).join("") + "</section>";
+  }).join("");
+  html += '<details class="prices" id="priceBox"><summary>単価表(仮置きを含む。変更はこのブラウザに保存)</summary><div class="ptable">' +
+    PRICE_DEFS.map(function (g) {
+      return "<h3>" + esc(g[0]) + "</h3>" + g[1].map(function (d) {
+        return '<label for="p_' + d[0] + '">' + esc(d[1]) + '</label><input id="p_' + d[0] + '" inputmode="numeric" data-price="' + d[0] + '" value="' + P[d[0]] + '">';
+      }).join("");
+    }).join("") + '</div><p class="hint"><button type="button" id="priceReset">単価表を初期値に戻す</button></p></details>';
+  var open = document.getElementById("priceBox"); var wasOpen = open && open.open;
+  form.innerHTML = html;
+  if (wasOpen) document.getElementById("priceBox").open = true;
+}
+
+form.addEventListener("click", function (e) {
+  var b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.seg) { var c = STEPS["seg_" + b.dataset.seg]; S[b.dataset.seg] = c.o[+b.dataset.i][0]; if (c.onset) c.onset(); }
+  else if (b.dataset.multi) { S[b.dataset.multi][b.dataset.v] = !S[b.dataset.multi][b.dataset.v]; }
+  else if (b.dataset.toggle) { S[b.dataset.toggle] = !S[b.dataset.toggle]; }
+  else if (b.dataset.step) { var st = STEPS[b.dataset.step]; S[st.k] = Math.min(st.max, Math.max(st.min, S[st.k] + st.step * +b.dataset.d)); if (st.k === "days") syncTimes(); }
+  else if (b.dataset.role) { var rr = ROLES.filter(function (r) { return r[0] === b.dataset.role; })[0]; S.roleN[rr[0]] = Math.max(0, roleCount(rr) + +b.dataset.d); }
+  else if (b.dataset.staffreset) { S.roleN = {}; }
+  else if (b.dataset.daytab) { S.dayTab = +b.dataset.daytab; }
+  else if (b.dataset.fix) { S.conf[b.dataset.fix] = S.conf[b.dataset.fix] || {}; S.conf[b.dataset.fix].fixed = b.dataset.v === "1"; }
+  else if (b.dataset.open) { S.open[b.dataset.open] = !S.open[b.dataset.open]; }
+  else if (b.dataset.dv) { S.dv[b.dataset.dv] = b.dataset.v; }
+  else if (b.dataset.dcnt) { var dc = DCNT[b.dataset.dcnt]; S[dc.k] = Math.min(dc.max, Math.max(dc.min, S[dc.k] + dc.step * +b.dataset.d)); }
+  else if (b.dataset.infladd) { S.infl.push({ n: "", sns: "X", f: 0, fee: 0 }); }
+  else if (b.dataset.infldel) { S.infl.splice(+b.dataset.infldel, 1); }
+  else if (b.dataset.none) { Object.keys(S[b.dataset.none]).forEach(function (k) { S[b.dataset.none][k] = false; }); }
+  else if (b.id === "priceReset") { PRICE_DEFS.forEach(function (g) { g[1].forEach(function (d) { P[d[0]] = d[2]; }); }); save("nv_quote_prices", P); }
+  else return;
+  commit(true);
+});
+form.addEventListener("input", function (e) {
+  var t = e.target;
+  if (t.dataset.text) { S[t.dataset.text] = t.value; commit(false); }
+  if (t.dataset.infl && t.tagName === "INPUT") { var ir = S.infl[+t.dataset.infl]; ir[t.dataset.f] = t.dataset.f === "n" ? t.value : Number(t.value.replace(/[^\d]/g, "")) || 0; commit(false); }
+  if (t.dataset.num) { S[t.dataset.num] = Number(t.value.replace(/[^\d]/g, "")) || 0; if (t.dataset.num === "kpiApps" && S.kpiApps > 0) S.apps = Math.max(10, Math.ceil(S.kpiApps / 10) * 10); commit(false); var kh = document.getElementById("kpiHint"); if (kh) kh.innerHTML = kpiText(true); }
+  if (t.dataset.stepin) { var sc = STEPS[t.dataset.stepin], v = Number(t.value.replace(/[^\d]/g, "")); if (v) { S[sc.k] = Math.min(sc.max, Math.max(sc.min, v)); save("nv_quote_state13", S); renderPaper(); } }
+  if (t.dataset.price) { var v = Number(t.value.replace(/[^\d.]/g, "")); if (isFinite(v)) { P[t.dataset.price] = v; save("nv_quote_prices", P); commit(false); } }
+});
+form.addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.dataset.date) { S[t.dataset.date] = t.value; commit(false); }
+  if (t.dataset.time) { S.times[S.dayTab][t.dataset.time] = t.value; commit(true); }
+  if (t.dataset.infl && t.tagName === "SELECT") { S.infl[+t.dataset.infl].sns = t.value; commit(false); }
+  if (t.dataset.disc) { S.dvDisc[t.dataset.disc] = +t.value; commit(false); }
+  if (t.dataset.rel) { S[t.dataset.rel] = +t.value; commit(true); }
+  if (t.dataset.when) { S.conf[t.dataset.when] = S.conf[t.dataset.when] || {}; S.conf[t.dataset.when].when = t.value; commit(false); }
+  if (t.dataset.stepin) commit(true);
+  if (t.dataset.date === "date") commit(true);
+});
+form.addEventListener("submit", function (e) { e.preventDefault(); });
+
+function commit(rerender) { save("nv_quote_state13", S); if (rerender) { var y = window.scrollY; renderForm(); window.scrollTo(0, y); } renderPaper(); }
+
+/* ---------- 見積の計算 ---------- */
+var MEDIA = [
+  ["onecareer", "ONE CAREER(ワンキャリア)", "monthly", "初期費用とライトプランの月額(通常期、同時に1イベント掲載)"],
+  ["mynavi", "マイナビ インターンシップ", "m_mynavi", "インターンシップサイトのパッケージB・単独掲載(80万円から)"],
+  ["rikunabi", "リクナビ インターンシップ", "m_rikunabi", "インターンシップ期間の基本掲載料(30万円から)"],
+  ["wantedly", "Wantedly", "monthly", "ライトプランの月額。契約は最短6か月"],
+  ["paiza", "paiza新卒", "m_paiza", "インターンやイベントの掲載は無料(採用時の成果報酬は別)"],
+  ["bizcon_free", "ビジコンDB 無料掲載", "m_bizcon_free", "ビジネスコンテストのデータベースに無料で掲載(掲載の可否は運営が判断)"],
+  ["bizcon_light", "ビジコンDB 広告ライト", "monthly", "サイト内の3か所に広告を出すプラン(月額)"],
+  ["bizcon_premium", "ビジコンDB 広告プレミアム", "monthly", "広告の上位プラン(月額)"],
+  ["bizcon_direct", "ビジコンDB 直接集客プラン", null, "料金は見積が必要"],
+  ["toryumon_free", "登竜門 無料掲載", "m_toryumon_free", "コンテスト情報サイトに無料で掲載(掲載の可否と時期は編集部が判断)"],
+  ["toryumon_pickup", "登竜門 注目プラン", "m_toryumon_pickup", "掲載日を指定できる広告掲載(20万円から、税抜)"],
+  ["koubo_new", "公募ガイドONLINE おすすめ新着", "m_koubo_new", "公募・コンテスト情報サイトのおすすめ新着枠(2週間)"],
+  ["goodfind", "Goodfind", null, "料金は公開されていないため、見積が必要"],
+  ["gaishi", "外資就活ドットコム", null, "料金は公開されていないため、見積が必要"],
+  ["supporterz", "サポーターズ", null, "固定費0円の成果報酬型。イベント集客の条件は見積が必要"],
+  ["labbase", "LabBase", null, "月額のデータベース料金。金額は見積が必要"]
+];
+var SITES = [
+  ["connpass", "connpass", "s_connpass", "主催者も参加者も無料。エンジニア向けの勉強会やハッカソンの告知に多く使われる"],
+  ["techplay", "TECH PLAY", "s_techplay", "イベントページの作成と公開は無料"],
+  ["peatix", "Peatix", "s_peatix", "無料イベントは手数料なし(有料チケットはチケット代の4.9%+99円)"],
+  ["doorkeeper", "Doorkeeper", "monthly", "月額制(最も安いプラン)"],
+  ["techplay_brand", "TECH PLAY 法人向けの露出強化", null, "料金は公開されていないため、見積が必要"]
+];
+/* 媒体とサイトの利用者数(公開情報)。入力画面に備考として出す */
+var REACH_NOTE = {"onecareer": "利用者 累計240万人超", "mynavi": "登録学生 約80万人", "paiza": "paiza全体の利用者 60万人超", "bizcon_free": "ビジコンDB 掲載コンテスト700件超", "bizcon_light": "ビジコンDB 掲載コンテスト700件超", "bizcon_premium": "ビジコンDB 掲載コンテスト700件超", "bizcon_direct": "ビジコンDB 掲載コンテスト700件超", "toryumon_free": "年に2,000件以上のコンテストを紹介", "toryumon_pickup": "年に2,000件以上のコンテストを紹介", "koubo_new": "掲載情報が年に2万件以上", "gaishi": "エンジニア向けの姉妹サービスに27卒8,000人超", "labbase": "登録学生 約9万人", "techplay": "会員30万人超(社会人も含む)", "peatix": "利用者840万人以上(学生以外も含む)", "techplay_brand": "会員30万人超(社会人も含む)"};
+var WHEN = [["contract", "契約時"], ["venue", "会場の決定時"], ["close", "申込の締切日"], ["week", "開催の1週間前"], ["day", "開催当日"], ["after", "開催後の精算時"], ["quote", "媒体などからの見積の受領時"]];
+var CONF_RULES = [
+  [/^(会場費|審査会場費)/, false, "venue"], [/^(朝食|昼食|夕食|軽食と飲み物|懇親会|宿泊費|名札)/, false, "close"],
+  [/^(賞金|外部の審査員|AIやクラウド|学生団体|SNS広告費|インフルエンサー|告知サイト)/, true, "contract"],
+  [/^参加者の交通費/, false, "after"], [/(Nativiaの備品|消耗品)/, true, "contract"],
+  [/^掲載料/, false, "quote"], [/.*/, false, "week"]
+];
+function confOf(x) {
+  var r = CONF_RULES.filter(function (c) { return c[0].test(x.name); })[0];
+  var o = S.conf[x.name] || {};
+  return { fixed: o.fixed != null ? o.fixed : r[1], when: o.when || r[2] };
+}
+function whenText(k) {
+  var d0 = parseISO(S.date), w = WHEN.filter(function (x) { return x[0] === k; })[0];
+  var label = w ? w[1] : "";
+  if (!d0) return label;
+  if (k === "close") return label + "(" + jdate(addDays(d0, -S.closeDays)) + ")";
+  if (k === "week") return label + "(" + jdate(addDays(d0, -7)) + ")";
+  if (k === "day") return label + "(" + jdate(d0) + ")";
+  if (k === "after") return label + "(" + (d0.getMonth() + 2 > 12 ? d0.getFullYear() + 1 : d0.getFullYear()) + "年" + ((d0.getMonth() + 1) % 12 + 1) + "月ごろ)";
+  return label;
+}
+var TG = { tgGrade: { b1: "学部1年", b2: "学部2年", b3: "学部3年", b4: "学部4年", m: "修士", d: "博士" }, tgMajor: { bun: "文系", ri: "理系", info: "情報系", design: "デザイン系" }, tgRole: { eng: "エンジニア", des: "デザイナー", biz: "事業開発・企画", sales: "営業", found: "起業", ai: "AI活用" } };
+function targetText() {
+  var parts = [];
+  ["tgGrade", "tgMajor", "tgRole"].forEach(function (k) { var a = Object.keys(TG[k]).filter(function (x) { return S[k][x]; }).map(function (x) { return TG[k][x]; }); if (a.length) parts.push(a.join("・")); });
+  if (S.tgArea.trim()) parts.push(S.tgArea.trim());
+  var t = parts.join(" / ");
+  if (S.tgNote.trim()) t += (t ? "。" : "") + S.tgNote.trim();
+  return t;
+}
+function kpiText(forForm) {
+  var r = S.kpiReach, a = S.kpiApps, n = S.people, parts = [];
+  if (!r && !a) return forForm ? '<span id="kpiHint">閲覧数と応募数を入れると、応募率と参加率を計算します(参加数は参加学生の人数)</span>' : "";
+  if (r) parts.push("閲覧 " + num(r) + "人");
+  if (a) parts.push("応募 " + num(a) + "人" + (r ? "(応募率 " + (Math.round(a / r * 1000) / 10) + "%)" : ""));
+  parts.push("参加 " + num(n) + "人" + (a ? "(参加率 " + (Math.round(n / a * 1000) / 10) + "%)" : ""));
+  var t = parts.join(" → ");
+  return forForm ? '<span id="kpiHint">' + t + "</span>" : t;
+}
+function listNames(t) { var a = []; (t || "").split(/[、,，]+/).forEach(function (x) { if (x.trim()) a.push(x.trim()); }); return a; }
+var DISCS = [[0, "値引きなし"], [10, "10%値引き"], [20, "20%値引き"], [30, "30%値引き"], [50, "50%値引き"], [100, "今回は特別に無料"]];
+var MONTHLY = { bizcon_light: { month: "m_bizcon_light", min: 1 }, bizcon_premium: { month: "m_bizcon_premium", min: 1 }, onecareer: { init: "m_onecareer_init", month: "m_onecareer_month", min: 1 }, wantedly: { month: "m_wantedly_month", min: 6 }, doorkeeper: { month: "s_doorkeeper_month", min: 1 } };
+function adCost(m) {
+  if (m[2] !== "monthly") return { amt: P[m[2]], note: m[3] };
+  var c = MONTHLY[m[0]], mo = Math.max(S.adMonths, c.min);
+  var amt = (c.init ? P[c.init] : 0) + P[c.month] * mo;
+  return { amt: amt, note: m[3] + "。掲載期間" + mo + "か月" + (S.adMonths < c.min ? "(最短契約の" + c.min + "か月で計算)" : "") };
+}
+function clubNames() { var a = CLUBS.filter(function (c) { return S.clubSel[c]; }); (S.clubOther || "").split(/[、,，\s]+/).forEach(function (x) { if (x.trim()) a.push(x.trim()); }); return a; }
+var DELIV = [
+  ["企画", [
+    { k: "plan", name: "企画書(お題の設計、ビジュアル資料、御社との定例ミーティングを含む)", unit: "式", pk: "d_plan", def: "none" },
+    { k: "runbook", name: "当日の進行表と台本", unit: "日", pk: "d_runbook", def: "none", qty: function () { return nDays(); } },
+    { k: "rules", name: "募集要項と参加規定", unit: "式", pk: "d_rules", def: "none" }
+  ]],
+  ["集客・告知", [
+    { k: "lp", name: "告知ページ", unit: "ページ", pk: "d_lp", def: "none" },
+    { k: "form", name: "申込フォームと自動返信", unit: "式", pk: "d_form", def: "none" },
+    { k: "visual", name: "告知画像(SNS・Web用)", unit: "点", pk: "d_visual", def: "none", cnt: { k: "visN", label: "画像の数", min: 1, max: 20, step: 1, suf: "点" } },
+    { k: "flyer", name: "大学での広告チラシ(印刷、掲示の申請、掲示と配布)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "tate", name: "大学での立て看板(制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "univDesign", name: "大学での広告チラシと立て看板のデザイン", unit: "式", pk: "d_univ_design", def: "none", show: function () { return dvOf(DV_BY.flyer) !== "none" || dvOf(DV_BY.tate) !== "none"; } },
+    { k: "sns", name: "SNSの告知投稿", unit: "投稿", pk: "d_sns", def: "none", cnt: { k: "posts", label: "投稿の数", min: 1, max: 40, step: 1, suf: "投稿" } },
+    { k: "apps", name: "申込者の管理(問い合わせ対応、リマインド、参加確定の連絡)", unit: "20人", pk: "d_apps", def: "none", qty: function () { return Math.ceil(S.apps / 20); }, cnt: { k: "apps", label: "申込者の見込み", min: 10, max: 1000, step: 10, suf: "人" } },
+    { k: "screen", name: "書類選考", unit: "件", pk: "d_screen", def: "none", qty: function () { return S.apps; }, show: function () { return S.format === "biz"; } }
+  ]],
+  ["コンテンツ", [
+    { k: "themeSlides", name: "お題の説明スライド", unit: "式", pk: "d_themeSlides", def: "none" },
+    { k: "guide", name: "参加者向けのしおり(電子)", unit: "式", pk: "d_guide", def: "none" },
+    { k: "briefing", name: "参加者向けの事前説明会(スライドと運営)", unit: "回", pk: "d_brief", def: "none", cnt: { k: "briefN", label: "回数", min: 1, max: 5, step: 1, suf: "回" } },
+    { k: "ceremony", name: "開会式と閉会式のスライドと演出", unit: "式", pk: "d_ceremony", def: "none" },
+    { k: "op", name: "オープニングムービー", unit: "本", pk: "d_op", def: "none" },
+    { k: "tech", name: "技術資料やハンズオンの教材", unit: "式", pk: "d_tech", def: "none", show: function () { return S.format === "hack"; } },
+    { k: "mentor", name: "本選までのメンタリングと中間発表", unit: "式", pk: "mentor", def: "none", show: function () { return S.format === "biz"; } }
+  ]],
+  ["審査", [
+    { k: "criteria", name: "審査基準と配点表", unit: "式", pk: "d_criteria", def: "none" },
+    { k: "sheets", name: "審査シートと集計表", unit: "式", pk: "d_sheets", def: "none" },
+    { k: "judgeBrief", name: "審査員とメンターへの説明資料と事前説明", unit: "回", pk: "d_judgeBrief", def: "none" }
+  ]]
+];
+var DV_BY = {}; DELIV.forEach(function (g) { g[1].forEach(function (it) { DV_BY[it.k] = it; }); });
+var DCNT = {}; DELIV.forEach(function (g) { g[1].forEach(function (it) { if (it.cnt) DCNT[it.cnt.k] = it.cnt; }); });
+function dvOf(it) { return S.dv[it.k] || it.def; }
+function dvOn(k) { var f = null; DELIV.forEach(function (g) { g[1].forEach(function (it) { if (it.k === k) f = it; }); }); return f && (!f.show || f.show()) && dvOf(f) !== "none"; }
+var PROMO_NAMES = { own: "学生団体への告知", ads: "SNS広告", univ: "大学での広告", site: "イベント告知サイト", media: "学生向けの有料媒体", infl: "インフルエンサーへの告知依頼" };
+function promoText() { var a = []; var _own = S.promo.own && clubNames().length ? "学生団体(" + clubNames().join("、") + ")への告知" : null; var _media = S.promo.media ? MEDIA.filter(function (m) { return S.mediaSel[m[0]]; }).map(function (m) { return m[1]; }).concat(listNames(S.mediaOther)) : []; if (dvOn("sns")) a.push("SNSでの告知"); var _uw = (dvOn("flyer") ? ["チラシ"] : []).concat(dvOn("tate") ? ["立て看板"] : []); if (_uw.length && !S.promo.univ) a.push("大学での広告(" + _uw.join("と") + ")"); Object.keys(PROMO_NAMES).forEach(function (k) { if (!S.promo[k]) return; if (k === "own") { if (_own) a.push(_own); return; } if (k === "media") { if (_media.length) a.push("学生向けの有料媒体(" + _media.join("、") + ")"); return; } if (k === "univ") { var u = univList(); var ut = u.join("、") + (u.length && _uw.length ? "に" : "") + _uw.join("と"); a.push(ut ? "大学での広告(" + ut + ")" : PROMO_NAMES.univ); return; } if (k === "site") { var st = SITES.filter(function (m) { return S.siteSel[m[0]]; }).map(function (m) { return m[1]; }); if (st.length) a.push("イベント告知サイト(" + st.join("、") + ")"); return; } if (k === "infl") { var iv = inflRows().map(function (r) { return (r.n.trim() || "未定") + " " + r.sns; }); if (!iv.length) iv = listNames(S.inflNames); a.push(iv.length ? "インフルエンサーへの告知依頼(" + iv.join("、") + ")" : PROMO_NAMES.infl); return; } a.push(PROMO_NAMES[k]); }); return a.length ? a.join("、") : "未定"; }
+var STD = "Nativiaの標準単価です。";
+var EQ = "レンタル料金に配送と設営を含めた見込みです。会場や御社に備え付けがあれば外せます。";
+function basisFor(x) {
+  var n = x.name;
+  var R = [
+    [/^評価レポート/, function () { return "審査の結果と当日の様子をもとに、参加者1人ずつの評価と講評をまとめたレポートです。採用の判断に使えます。適性検査SPI3の受検料(1人4,000〜5,500円、税抜)と同じ水準にしています。テストでは分からない、チームでの動き方や形にする力まで評価します。"; }],
+    [/^企画書/, function () { return "お題の設計、企画書、ビジュアル資料、御社との定例ミーティングと議事録を含みます。イベント企画会社の企画費の相場は10万〜15万円です。また、企画書の作成代行はスライド1枚7,000〜1万円が目安で、20枚なら14万〜20万円になります。お題の設計を含むため、この上限に合わせています。"; }],
+    [/^当日の進行表と台本/, function () { return "開催日ごとのタイムテーブルと台本です。資料作成の相場(新規作成で1ページ7,000〜1万円)をもとに、1日あたり5ページ分として計算しています。"; }],
+    [/^募集要項と参加規定/, function () { return "行政書士に契約書の作成を頼む場合の相場は3万〜5万円です。Nativiaのひな形を使うため、その下限にしています。"; }],
+    [/^告知ページ/, function () { return "外注の相場は、ノーコードの格安プランで5万〜10万円(構成と文章は含まない)、構成や文章まで含めると10万〜60万円です。Nativiaは文章を書いてノーコードで作るため、その間の15万円にしています。"; }],
+    [/^申込フォーム/, function () { return "外注の相場は、自動返信と申込の記録まで含めて1万〜2万円です。その上限にしています。"; }],
+    [/^告知画像/, function () { return "静止画のバナー1枚の外注相場は3,000〜1万円です。その上限にしています。"; }],
+    [/^大学での広告チラシと立て看板のデザイン/, function () { return "チラシのデザインの相場はフリーランスで1.5万〜5万円です。その間の3万円で、チラシと立て看板の2つの大きさに合わせて作ります。"; }],
+    [/^大学での広告チラシ/, function () { return "1キャンパスあたり、A4カラーの印刷200枚(1,000枚で5,000〜1万5,000円の相場から約3,000円)、掲示の申請と学内での掲示・配布に約4時間(1時間2,000円で8,000円)、移動に約2,000円かかり、合わせて約1万3,000円です。少し上の1万5,000円にしています。"; }],
+    [/^大学での立て看板/, function () { return "自立式の看板の制作相場は2万〜15万円です。学内用の簡易な立て看板(板と出力したシート)は材料と出力で約2万円、設置と撤去に2人で延べ約12時間(1時間2,000円で2万4,000円)、運搬に約6,000円かかり、1キャンパスあたり5万円にしています。立て看板は大学の許可が必要で、公認の学生団体の名義でしか出せない大学もあります。"; }],
+    [/^SNSの告知投稿/, function () { return "画像を含む投稿の制作は、個人への依頼で1投稿2,500〜7,000円の例があります。その間の5,000円にしています。"; }],
+    [/^申込者の管理/, function () { return "申込者1人あたり、受付の確認、リマインド2回、問い合わせへの対応で約15分かかると見込み、20人で約5時間、1時間2,000円として1万円にしています。"; }],
+    [/^書類選考/, function () { return "応募書類1件を審査基準に沿って読み、評価をつけるのに約20分かかると見込み、1時間3,000円として1件1,000円にしています。"; }],
+    [/^お題の説明スライド/, function () { return "スライド作成の相場(新規作成で1枚7,000〜1万円)をもとに、5枚分として計算しています。"; }],
+    [/^参加者向けのしおり/, function () { return "資料作成の相場(1ページ3,000〜1万5,000円)のうち、Nativiaのひな形を使うため下限の3,000円で、10ページ分として計算しています。"; }],
+    [/^参加者向けの事前説明会/, function () { return "説明用のスライド5枚分(1枚1万円)として計算し、1時間の説明会の運営を含めています。"; }],
+    [/^開会式と閉会式/, function () { return "学生が楽しめる場をつくるための、開会式と閉会式のスライドと演出です。スライド作成の相場(1枚7,000〜1万円)をもとに、15枚分として計算しています。"; }],
+    [/^オープニングムービー/, function () { return "1〜3分のオープニング映像は、フリーランスで2万〜8万円が相場で、企業イベントでは30万円までの予算で依頼される例があります。その間の10万円にしています。"; }],
+    [/^技術資料/, function () { return "スライド作成の相場(1枚7,000〜1万円)をもとに、10枚分として計算しています。"; }],
+    [/^審査基準と配点表/, function () { return "御社が見たい力を、学生を評価する基準と配点に落とし込みます。資料作成の相場(1ページ7,000〜1万円)をもとに、5ページ分として計算しています。"; }],
+    [/^審査シートと集計表/, function () { return "審査シートと集計表は、申込フォームと同じ作りのため、フォーム作成の相場(自動返信と記録まで含めて1万〜2万円)の上限にしています。"; }],
+    [/^審査員とメンターへの説明資料/, function () { return "説明用のスライド3枚分(1枚1万円)として計算しています。"; }],
+    [/^本選までのメンタリング/, function () { return "書類選考を通過したチームへの相談対応と、中間発表の運営です。"; }],
+    [/^当日運営スタッフ/, function () { return "時給" + num(P.rate) + "円×稼働時間×人数で計算しています。稼働時間は日ごとの開催時間に、開始前の準備1時間と終了後の片付け1時間を足した時間です。人数は役割ごとに決めています(" + roleText() + ")。会場係は参加者" + P.ratio_venue + "人に1人、撮影・SNS係は参加者" + P.ratio_photo + "人に1人が目安です。"; }],
+    [/^学生団体への告知/, function () { return "学生団体(" + clubNames().join("、") + ")のSNSやメンバーへの連絡網で、イベントの告知を出してもらう費用です。1団体" + num(P.club_ad) + "円で依頼します。"; }],
+    [/^撮影と当日編集/, function () { return "撮影と編集を外注した場合、イベント撮影は15万〜30万円の価格帯が最も多く、3分ほどのダイジェスト編集だけでも5万〜12万円かかります。Nativiaが撮影から当日の編集までを一括で行うため、この範囲の中で設定しています。"; }],
+    [/^開催後の採用フォロー/, function () { return "参加者への連絡と面談設定の支援です。" + STD; }],
+    [/^会場費\(目安\)/, function () { return "会場が決まっていないため、1日" + man(P.venue_unknown) + "を目安に置いています。会場が決まったら差し替えます。"; }],
+    [/^審査会場費/, function () { return "審査を行う会場" + (S.judgeVenueName.trim() ? "(" + S.judgeVenueName.trim() + ")" : "") + "の料金です。"; }],
+    [/^会場費/, function () { return "ご希望の会場の1日あたりの料金です。"; }],
+    [/^昼食/, function () { return "会議やイベント用の弁当は1人500〜1,500円の価格帯が多く、その中間の1,000円にしています。ケータリングにする場合は1人3,000〜5,000円が目安です。"; }],
+    [/^(朝食|夕食|軽食と飲み物)/, function () { return "弁当や軽食の一般的な価格帯をもとにした見込みです。"; }],
+    [/^懇親会/, function () { return "立食のケータリングは1人3,600〜5,000円が目安です。軽食と飲み物を中心にした見込みとして3,000円にしています。"; }],
+    [/^宿泊費/, function () { return S.stayMode === "total" ? (S.stayName.trim() ? S.stayName.trim() + "の" : "宿泊施設の") + "見積や予約内容にもとづく合計の金額です。" : (S.stayName.trim() ? S.stayName.trim() + "の" : "宿泊施設の") + "1人1泊の料金(" + num(S.stayRate) + "円)に、泊まる人数と泊数を掛けています。"; }],
+    [/^賞金/, function () { return "御社のご指定の額です。"; }],
+    [/^外部の審査員/, function () { return "ご指定の人数と1人あたりの謝礼です。"; }],
+    [/^参加者の交通費の補助\(上限額\)/, function () { return "1人" + num(S.travel) + "円を上限に、実際の申請額で精算します。見積には全員が上限まで使った場合の額を載せています。"; }],
+    [/^参加者の交通費の補助\(見込み\)/, function () { return "上限を設けず、実際の申請額で精算します。見積には1人" + num(S.travel) + "円の見込みで計算した額を載せています。"; }],
+    [/^AIやクラウドのクレジット/, function () { return "参加者が開発で使うAIやクラウドの利用枠です。1人あたりの額はご指定によります。"; }],
+    [/^プロジェクター/, function () { return "レンタル業者のスクリーンセットは、30〜40人規模で1日1万3,200円からです。会場の広さに合う機種と、配送と設営を含めた見込みです。"; }],
+    [/^(ワイヤレスマイク|ステージ照明|ポケットWi-Fi|貸し出しパソコン|外部モニター|配信機材|追加の机と椅子)/, function () { return EQ; }],
+    [/^(ヌーボード|延長コードと電源タップ)\(Nativiaの備品/, function () { return "Nativiaが持っている備品の貸し出しです。1回あたりのレンタル料は、購入価格のおよそ2割(5回の貸し出しで購入費を回収する考え方)にしています。"; }],
+    [/^賞金パネル/, function () { return "表彰で入賞者に手渡す大判の賞金パネルで、デザインと印刷を含めて1枚1万円の見込みです。賞金のある賞の数だけ用意します。"; }],
+    [/^ヌーボード\(副賞/, function () { return "入賞チームの全員に贈る副賞です。購入価格に名入れなどの手間を含めた見込みです。"; }],
+    [/^賞状/, function () { return "用紙、印刷、筆耕を含めた見込みです。"; }],
+    [/^(模造紙|救急箱)/, function () { return "使い切りの消耗品として、購入する場合の見込みです。"; }],
+    [/^(トロフィーや盾|メダル)/, function () { return "名入れを含めた見込みです。大きさや材質で変わるため、仕様が決まったら確定します。"; }],
+    [/^告知サイト /, function (x) { return x.note + "。各サイトの公開されている料金です。"; }],
+    [/^掲載料 /, function (x) { return x.note === "ご指定の媒体の掲載料" ? "ご指定の媒体の掲載料です。媒体からの見積をもとにしています。" : x.note + "。掲載代理店などの公開情報をもとにした目安です。"; }],
+    [/^SNS広告費/, function () { return "御社のご予算に合わせた額です。"; }], [/^インフルエンサー/, function () { return "ご本人と相談して決めた依頼料です。"; }]
+  ];
+  for (var i = 0; i < R.length; i++) if (R[i][0].test(n)) return R[i][1](x);
+  return STD;
+}
+function renderBasis(q) {
+  function rowsB(list) { return list.filter(function (x) { return x.skip !== "今回は発注なし"; }).map(function (x) { return "<tr><td>" + esc(x.name) + (x.skip ? "(" + esc(x.skip) + ")" : "") + '</td><td class="n">' + num(x.skip ? x.full : x.amt) + "</td><td>" + (x.skip ? "通常の金額です。今回の見積には含めていません。" : "") + (x.disc ? "通常は" + num(x.full) + "円のところ、" + x.disc + "としています。" : "") + esc(basisFor(x)) + "</td></tr>"; }).join(""); }
+  document.getElementById("basis").innerHTML =
+    "<h1>金額の根拠</h1>" + '<span class="sub">見積番号 ' + quoteNo() + " の別紙</span>" +
+    (q.prep.length ? '<div class="blk"><h3>開催までの準備</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.prep) + "</tbody></table></div>" : "") +
+    '<div class="blk"><h3>当日の運営と開催後</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.fee) + "</tbody></table></div>" +
+    (q.cost.length ? '<div class="blk"><h3>実費(見込み・開催後に精算)</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.cost) + "</tbody></table></div>" : "") +
+    '<div class="blk"><h3>相場について</h3><ul class="notes"><li>相場は2026年10月時点で公開されている制作会社、レンタル業者、調査の情報をもとにしています。</li><li>実費は見込みの額です。開催後に、実際にかかった額で精算します。</li></ul></div>';
+}
+function compute() {
+  var prep = [], fee = [], cost = [], byClient = [];
+  var d = nDays(); syncTimes();
+  var staff = staffN(), hrs = totalWorkH();
+  var staffCost = staff * hrs * P.rate;
+  function L(arr, name, qty, unit, price, note) { if (qty > 0 && price > 0) arr.push({ name: name, qty: qty, unit: unit, price: price, amt: qty * price, note: note || "" }); }
+
+  DELIV.forEach(function (g) { g[1].forEach(function (it) {
+    if (it.show && !it.show()) return;
+    var v = dvOf(it);
+    if (v === "client") byClient.push(it.name.replace(/\(.*\)$/, ""));
+    var qty = it.qty ? it.qty() : it.cnt ? S[it.cnt.k] : 1;
+    if (v !== "nv") { prep.push({ name: it.name, qty: qty, unit: it.unit, price: P[it.pk], amt: 0, skip: v === "client" ? "御社で実施" : "今回は発注なし", full: qty * P[it.pk], note: "" }); return; }
+    var dpc = S.dvDisc[it.k] || 0, full = qty * P[it.pk];
+    if (dpc > 0) { prep.push({ name: it.name, qty: qty, unit: it.unit, price: P[it.pk], amt: Math.round(full * (100 - dpc) / 100), disc: dpc === 100 ? "今回は特別に無料" : dpc + "%値引き", full: full, note: it.k === "apps" ? "申込者" + S.apps + "人の見込み" : "" }); return; }
+    L(prep, it.name, qty, it.unit, P[it.pk], it.k === "apps" ? "申込者" + S.apps + "人の見込み" : "");
+  }); });
+  byClient.push("メンターと審査員の手配");
+  if (S.review) L(fee, "評価レポート(参加者ごとの評価と講評)", S.people, "人", P.review_pp);
+  L(fee, "当日運営スタッフ", staff * hrs, "人時", P.rate, staff + "人(" + roleText() + ")×" + hfmt(hrs));
+  if (S.movie) L(fee, "撮影と当日編集のエンディングムービー", 1, "式", P.movie, "閉会式で上映。写真と動画は御社の採用広報に利用可");
+  if (S.follow) L(fee, "開催後の採用フォロー", 1, "式", P.follow, "参加者への連絡と面談設定の支援");
+
+  // 実費
+  if (S.venue === "rent") L(cost, "会場費", d, "日", S.venueRate);
+  L(cost, "審査会場費", 1, "式", S.judgeVenueCost, S.judgeVenueName.trim());
+  if (S.venue === "tbd") L(cost, "会場費(目安)", d, "日", P.venue_unknown, "会場の決定後に確定");
+  var eaters = S.people + staff + S.corp;
+  var mealName = { breakfast: "朝食", lunch: "昼食", dinner: "夕食", snack: "軽食と飲み物" };
+  ["breakfast", "lunch", "dinner", "snack"].forEach(function (m) {
+    if (!S.meals[m]) return;
+    var times = m === "breakfast" ? (S.nights > 0 ? Math.min(S.nights, d) : 0) : d;
+    L(cost, mealName[m], eaters * times, "食", P[m], "参加者" + S.people + "人+スタッフ" + staff + "人+御社" + S.corp + "人");
+  });
+  if (S.party) L(cost, "懇親会", eaters, "人", P.party, "会場は" + partyVenue());
+  if (S.nights > 0 && S.stayMode === "total") L(cost, "宿泊費", 1, "式", S.stayTotal, (S.stayName.trim() ? S.stayName.trim() + "。" : "") + S.nights + "泊");
+  else if (S.nights > 0) L(cost, "宿泊費", (S.people + staff) * S.nights, "人泊", S.stayRate, (S.stayName.trim() ? S.stayName.trim() + "。" : "") + "参加者" + S.people + "人+スタッフ" + staff + "人×" + S.nights + "泊");
+  L(cost, "賞金 1位", 1, "本", S.p1); L(cost, "賞金 2位", 1, "本", S.p2); L(cost, "賞金 3位", 1, "本", S.p3);
+  L(cost, "賞金 特別賞", S.spCount, "本", S.spAmt);
+  L(cost, "外部の審査員・メンターの謝礼", S.judges, "人", S.judgeFee);
+  if (S.travelMode === "cap") L(cost, "参加者の交通費の補助(上限額)", S.people, "人", S.travel, "1人" + num(S.travel) + "円まで。実際の申請額で精算");
+  if (S.travelMode === "free") L(cost, "参加者の交通費の補助(見込み)", S.people, "人", S.travel, "上限なし。実際の申請額で精算");
+  L(cost, "AIやクラウドのクレジット", S.people, "人", S.credit);
+  var eq = S.eq;
+  if (eq.proj) L(cost, "プロジェクターとスクリーン", d, "日", P.eq_proj);
+  if (eq.audio) L(cost, "ワイヤレスマイクとスピーカー", d, "日", P.eq_audio);
+  if (eq.light) L(cost, "ステージ照明", d, "日", P.eq_light);
+  if (eq.wifi) L(cost, "ポケットWi-Fi", S.wifiN * d, "台日", P.eq_wifi);
+  if (eq.power) L(cost, "延長コードと電源タップ(Nativiaの備品)", teams(), "セット", P.eq_power, "1チーム1セット");
+  if (eq.pc) L(cost, "貸し出しパソコン", S.pcN * d, "台日", P.eq_pc);
+  if (eq.monitor) L(cost, "外部モニター", S.monN * d, "台日", P.eq_monitor);
+  if (eq.stream) L(cost, "配信機材", d, "日", P.eq_stream);
+  if (eq.nuboard) L(cost, "ヌーボード(Nativiaの備品)", teams(), "冊", P.eq_nuboard, "1チーム1冊");
+  if (eq.stationery) L(cost, "模造紙・付箋・ペン(消耗品)", S.people, "人", P.eq_stationery);
+  if (eq.desk) L(cost, "追加の机と椅子", d, "日", P.eq_desk);
+  if (eq.first) L(cost, "救急箱", 1, "式", P.eq_first);
+  var pr = S.pr;
+  var prizes = (S.p1 ? 1 : 0) + (S.p2 ? 1 : 0) + (S.p3 ? 1 : 0) + S.spCount;
+  if (pr.name) L(cost, "名札とネックストラップ", S.people + staff + S.corp, "個", P.pr_name);
+  if (pr.sign) L(cost, "会場の案内表示", 1, "式", P.pr_sign);
+  if (pr.panel) L(cost, "バックパネル(制作と設営)", 1, "式", P.pr_panel);
+  var winTeams = (S.p1 ? 1 : 0) + (S.p2 ? 1 : 0) + (S.p3 ? 1 : 0) + S.spCount;
+  if (S.award.trophy) L(cost, "トロフィーや盾", winTeams, "個", P.pr_trophy, "入賞チームに1つ");
+  if (S.award.medal) L(cost, "メダル", winTeams * S.team, "個", P.pr_medal, "入賞チームの全員");
+  if (S.award.cert) L(cost, "賞状", winTeams, "チーム", P.pr_cert, "入賞チームごと");
+  if (pr.board) L(cost, "賞金パネル", (S.p1 ? 1 : 0) + (S.p2 ? 1 : 0) + (S.p3 ? 1 : 0) + (S.spAmt ? S.spCount : 0), "枚", P.pr_board);
+  if (pr.tshirt) L(cost, "ノベルティ Tシャツ", S.people, "枚", P.pr_tshirt);
+  if (pr.sticker) L(cost, "ノベルティ ステッカー", S.people, "枚", P.pr_sticker);
+  if (pr.tote) L(cost, "ノベルティ トートバッグ", S.people, "個", P.pr_tote);
+  if (S.promo.own && clubNames().length) L(cost, "学生団体への告知", clubNames().length, "団体", P.club_ad, clubNames().join("、"));
+  if (S.promo.ads) L(cost, "SNS広告費", 1, "式", S.adsAmt);
+  var mediaTbd = [];
+  if (S.promo.media) MEDIA.forEach(function (m) { if (!S.mediaSel[m[0]]) return; if (m[2] == null) mediaTbd.push(m[1]); else { var ac = adCost(m); L(cost, "掲載料 " + m[1], 1, "式", ac.amt, ac.note); } });
+  if (S.promo.media && listNames(S.mediaOther).length) { if (S.mediaOtherCost > 0) L(cost, "掲載料 " + listNames(S.mediaOther).join("、"), 1, "式", S.mediaOtherCost, "ご指定の媒体の掲載料"); else mediaTbd.push(listNames(S.mediaOther).join("、")); }
+  if (S.promo.site) SITES.forEach(function (m) { if (!S.siteSel[m[0]]) return; if (m[2] == null) mediaTbd.push(m[1]); else { var ac = adCost(m); L(cost, "告知サイト " + m[1], 1, "式", ac.amt, ac.note); } });
+  if (S.promo.infl) {
+    var ir = inflRows();
+    ir.forEach(function (r) { if (r.fee > 0) L(cost, "インフルエンサーへの告知依頼", 1, "人", r.fee, inflDesc(r)); });
+    if (!ir.length && S.inflAmt) L(cost, "インフルエンサーへの告知依頼", 1, "式", S.inflAmt, listNames(S.inflNames).join("、"));
+  }
+
+  var prepSum = prep.reduce(function (a, x) { return a + x.amt; }, 0);
+  var daySum = fee.reduce(function (a, x) { return a + x.amt; }, 0);
+  var feeSum = prepSum + daySum;
+  var costSum = cost.reduce(function (a, x) { return a + x.amt; }, 0);
+  var discAll = Math.min(S.discAmt || 0, feeSum);
+  var sub = feeSum + costSum - discAll, tax = Math.floor(sub * 0.1), total = sub + tax;
+  var deposit = Math.floor((feeSum - discAll) * 1.1 * depositRate());
+  cost.forEach(function (x) { var c = confOf(x); x.fixed = c.fixed; x.when = c.when; });
+  var fixedCost = cost.filter(function (x) { return x.fixed; }).reduce(function (a, x) { return a + x.amt; }, 0);
+  return { discAll: discAll, tbd: mediaTbd, fixedSum: prepSum + daySum + fixedCost - discAll, estSum: costSum - fixedCost, mediaTbd: mediaTbd, prep: prep, fee: fee, prepSum: prepSum, daySum: daySum, cost: cost, byClient: byClient, feeSum: feeSum, costSum: costSum, sub: sub, tax: tax, total: total, deposit: deposit, staff: staff, staffCost: staffCost, days: d, hrs: hrs };
+}
+
+/* ---------- 見積書の描画 ---------- */
+function quoteNo() {
+  if (viewerNo) return viewerNo;
+  var d = parseISO(S.issue) || new Date();
+  var key = "nv_quote_seq_" + iso(d);
+  var n = load(key, 1);
+  return "NV-" + String(d.getFullYear()).slice(2) + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(n);
+}
+function schedule() {
+  var d0 = parseISO(S.date); if (!d0) return {};
+  var days = nDays(); syncTimes();
+  var last = addDays(d0, days - 1), held = [];
+  for (var i = 0; i < days; i++) held.push(jdate(addDays(d0, i)) + " " + S.times[i].s + "〜" + S.times[i].e);
+  return {
+    held: held.join("<br>"),
+    promo: jdate(addDays(d0, -S.promoDays)),
+    close: jdate(addDays(d0, -S.closeDays)),
+    brief: dvOn("briefing") ? jdate(addDays(d0, -7)) : null,
+    report: !S.review ? null : jdate(addDays(last, 7))
+  };
+}
+function rows(list) {
+  return list.map(function (x) {
+    if (x.skip) return '<tr style="color:var(--ink-muted)"><td>' + esc(x.name) + ' <span style="font-size:9.5px;border:1px solid var(--ink-muted);padding:0 4px;border-radius:3px">' + esc(x.skip) + '</span><div class="note" style="font-size:10px">通常は ' + num(x.full) + '円(今回の見積には含めません)</div></td><td class="n">' + num(x.qty) + " " + esc(x.unit) + '</td><td class="n">' + num(x.price) + '</td><td class="n">0</td></tr>';
+    if (x.disc) return "<tr><td>" + esc(x.name) + ' <span style="font-size:9.5px;border:1px solid #1f3cf0;color:#1f3cf0;padding:0 4px;border-radius:3px">' + esc(x.disc) + '</span><div class="note" style="color:var(--ink-muted);font-size:10px">通常は ' + num(x.full) + "円" + (x.note ? "。" + esc(x.note) : "") + '</div></td><td class="n">' + num(x.qty) + " " + esc(x.unit) + '</td><td class="n">' + num(x.price) + '</td><td class="n">' + num(x.amt) + "</td></tr>";
+    return "<tr><td>" + esc(x.name) + (x.fixed === false ? ' <span style="font-size:9.5px;border:1px solid var(--ink-muted);color:var(--ink-muted);padding:0 4px;border-radius:3px">見込み</span>' : "") + (x.note ? '<div class="note" style="color:var(--ink-muted);font-size:10px">' + esc(x.note) + "</div>" : "") +
+      '</td><td class="n">' + num(x.qty) + " " + esc(x.unit) + '</td><td class="n">' + num(x.price) + '</td><td class="n">' + num(x.amt) + "</td></tr>";
+  }).join("");
+}
+function renderPaper() {
+  var q = compute(), sc = schedule();
+  var issue = parseISO(S.issue) || new Date();
+  var exp = addDays(issue, S.validity);
+  var venueTxt = (function () {
+    var nm = S.venueName.trim(), ad = S.venue === "rent" ? (S.venueAddr || "").trim() : "";
+    var head = { office: "御社のオフィス", rent: "外部の会場", tbd: "未定" }[S.venue] || "未定";
+    var detail = [nm, ad].filter(Boolean).join("、");
+    return esc(head + (S.venue && detail ? " " + detail : "")) + (S.venue === "rent" ? "(手配はNativiaが代行)" : "");
+  })();
+  var issuerName = "株式会社Nativia" + (S.issuer === "pre" ? "(設立準備中)" : "");
+  var notes = [
+    "金額は税抜で表示し、消費税は合計に対してまとめて計算しています。",
+    "「見込み」と書いた実費は、確定する時期の目安の欄にある時期に金額を確定し、開催後に実際にかかった額で精算します。",
+    "参加者のけがや事故、持ち物の紛失、写真の使い道は、Nativiaの参加規定で定め、申込時に参加者の同意を得ます。",
+    "参加者の個人情報を御社に提供する場合は、申込時に参加者の同意を得ます。"
+  ];
+  if (depositRate() > 0) notes.push("着手金は、ご契約時に代行費(税込)の" + Math.round(depositRate() * 100) + "%を請求します。");
+  if (q.mediaTbd.length) notes.push(q.mediaTbd.join("、") + "への掲載料は公開されていないため、媒体からの見積を受けて別途ご提示します。");
+  if (S.note.trim()) notes.push(S.note.trim());
+
+  document.getElementById("paper").innerHTML =
+    "<h1>御見積書</h1>" +
+    '<div class="meta"><span>見積番号 ' + quoteNo() + "</span><span>発行日 " + jdate(issue) + "</span></div>" +
+    '<div class="head"><div>' +
+      '<div class="to">' + esc(S.client || "(宛先)") + " " + (S.honor === "御中" ? "御中" : "") + "<small>" + esc(S.dept) + (S.honor === "様" ? " 様" : "") + "</small></div>" +
+      '<p class="lead">下記のとおり御見積申し上げます。</p>' +
+      '<div class="totalbox"><span>御見積金額(税込)</span><strong>' + yen(q.total) + "</strong></div>" +
+      '<div style="margin-top:6px;font-size:11px">有効期限 ' + jdate(exp) + "</div>" +
+    '</div><div class="from"><div class="co"><span class="logo">N</span>' + issuerName + "</div>代表 岸 遥杜<br>" +
+      (S.issuer === "reg" && S.invoice ? "登録番号 " + esc(S.invoice) + "<br>" : "") +
+      '<span style="color:var(--ink-muted)">所在地・連絡先は登記後に記載</span></div></div>' +
+
+    '<div class="blk"><h3>実施内容</h3><dl class="kv">' +
+      "<dt>件名</dt><dd>学生向け" + fmtName() + "の企画・運営代行</dd>" +
+      "<dt>形式</dt><dd>" + fmtName() + " / " + esc(S.mode || "開催方法は未定") + "</dd>" +
+      "<dt>開催日時</dt><dd>" + (sc.held || "未定") + "</dd>" +
+      "<dt>会場</dt><dd>" + venueTxt + "</dd>" +
+      (S.nights ? "<dt>宿泊</dt><dd>" + S.nights + "泊" + (S.stayName.trim() ? "(" + esc(S.stayName.trim()) + ")" : "(宿泊先は未定)") + "</dd>" : "") +
+      (S.judgeVenueName.trim() ? "<dt>審査会場</dt><dd>" + esc(S.judgeVenueName.trim()) + "</dd>" : "") +
+      "<dt>参加学生</dt><dd>" + S.people + "人(" + S.team + "人×" + teams() + "チーム)</dd>" +
+      "<dt>運営体制</dt><dd>当日スタッフ 計" + q.staff + "人(" + roleText() + ")<br>司会 " + (S.mc === "御社" ? "御社" : S.mc === "社内" ? "Nativiaのディレクター" : "未定") + " / チームの巡回 御社の社員の方</dd>" +
+      (targetText() ? "<dt>ターゲット</dt><dd>" + esc(targetText()) + "</dd>" : "") +
+      ((S.kpiReach || S.kpiApps) ? "<dt>集客の目標</dt><dd>" + esc(kpiText(false)) + "</dd>" : "") +
+      "<dt>集客</dt><dd>" + esc(promoText()) + "</dd>" +
+      "<dt>主な予定</dt><dd>告知開始 " + (sc.promo || "未定") + " / 申込締切 " + (sc.close || "未定") + (sc.brief ? " / 事前説明会 " + sc.brief : "") + (sc.report ? " / 評価レポート納品 " + sc.report : "") + "</dd>" +
+      (q.byClient.length ? "<dt>御社で行う</dt><dd>" + esc(q.byClient.join("、")) + "</dd>" : "") +
+    "</dl></div>" +
+
+    '<div class="blk"><h3>明細</h3><table class="items"><thead><tr><th>項目</th><th class="n">数量</th><th class="n">単価(円)</th><th class="n">金額(円)</th></tr></thead><tbody>' +
+      (q.prep.length ? '<tr class="grp"><td colspan="3">開催までの準備' + (q.prep.some(function (x) { return x.skip; }) ? '<span style="font-weight:400;font-size:10px;color:var(--ink-muted)"> 全項目を発注した場合は ' + num(q.prep.reduce(function (a, x) { return a + (x.skip ? x.full : x.amt); }, 0)) + '円</span>' : "") + '</td><td class="n">' + num(q.prepSum) + "</td></tr>" + rows(q.prep) : "") +
+      '<tr class="grp"><td colspan="3">当日の運営と開催後</td><td class="n">' + num(q.daySum) + "</td></tr>" + rows(q.fee) +
+      (q.cost.length ? '<tr class="grp"><td colspan="3">実費(見込み・開催後に精算)</td><td class="n">' + num(q.costSum) + "</td></tr>" + rows(q.cost) : "") +
+    "</tbody></table>" +
+    '<div class="sums">' + (q.discAll ? "<div>お値引き" + (S.discNote.trim() ? "(" + esc(S.discNote.trim()) + ")" : "") + "</div><div>−" + yen(q.discAll) + "</div>" : "") + '<div>小計</div><div>' + yen(q.sub) + "</div><div>消費税(10%)</div><div>" + yen(q.tax) + '</div><div class="g">合計</div><div class="g">' + yen(q.total) + "</div>" +
+      (depositRate() > 0 ? "<div>うち着手金</div><div>" + yen(q.deposit) + "</div><div>残金</div><div>" + yen(q.total - q.deposit) + "</div>" : "") + "</div></div>" +
+
+    '<div class="blk"><h3>確定している金額と、まだ決まっていない金額(税抜)</h3><table class="items"><thead><tr><th>区分</th><th class="n">金額(円)</th><th>確定する時期の目安</th></tr></thead><tbody>' +
+      '<tr class="grp"><td>確定している金額</td><td class="n">' + num(q.fixedSum) + "</td><td>ご契約時</td></tr>" +
+      '<tr class="grp"><td>見込みの金額</td><td class="n">' + num(q.estSum) + "</td><td></td></tr>" +
+      q.cost.filter(function (x) { return !x.fixed; }).map(function (x) { return "<tr><td>" + esc(x.name) + '</td><td class="n">' + num(x.amt) + "</td><td>" + esc(whenText(x.when)) + "</td></tr>"; }).join("") +
+      (q.tbd.length ? '<tr class="grp"><td>金額が未定</td><td class="n">未定</td><td></td></tr>' + q.tbd.map(function (n) { return "<tr><td>掲載料 " + esc(n) + '</td><td class="n">未定</td><td>' + esc(whenText("quote")) + "</td></tr>"; }).join("") : "") +
+    "</tbody></table></div>" +
+
+    '<div class="blk"><h3>お支払い条件</h3><dl class="kv">' +
+      "<dt>着手金</dt><dd>" + (depositRate() > 0 ? "ご契約時に " + yen(q.deposit) + "(代行費の" + Math.round(depositRate() * 100) + "%・税込)" : "なし") + "</dd>" +
+      "<dt>残金</dt><dd>" + (S.balance ? esc(S.balance) + "までに銀行振込" : "別途ご相談") + "</dd></dl></div>" +
+    '<div class="blk"><h3>備考</h3><ul class="notes">' + notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul></div>";
+
+  renderBasis(q);
+  var gross = q.feeSum - q.staffCost;
+  var rate = q.feeSum ? gross / q.feeSum : 0;
+  document.getElementById("internal").innerHTML =
+    '<span class="t">社内用(見積書には出ません)</span>' +
+    "<span>代行費 <b>" + yen(q.feeSum) + "</b></span>" +
+    "<span>当日スタッフ人件費 " + yen(q.staffCost) + "(" + q.staff + "人×" + hfmt(q.hrs) + ")</span>" +
+    "<span>人件費を引いた粗利 <b>" + yen(gross) + "(" + Math.round(rate * 100) + "%)</b></span>";
+}
+
+
+/* ---------- Markdownで書き出す(スケジュールや集客の資料を作るツールに渡す用) ---------- */
+function mdCell(t) { return String(t == null ? "" : t).replace(/\|/g, "／").replace(/\s+/g, " ").trim(); }
+function mdTable(head, rows) { return ["| " + head.map(mdCell).join(" | ") + " |", "|" + head.map(function () { return "---"; }).join("|") + "|"].concat(rows.map(function (r) { return "| " + r.map(mdCell).join(" | ") + " |"; })).join("\n"); }
+function optLabel(k, v) {
+  var f = null;
+  SECTIONS.forEach(function (sec) { (function walk(cs) { cs.forEach(function (c) { if (c.type === "row") walk(c.c); else if (c.k === k && c.o) f = c; }); })(sec.c); });
+  var o = f && f.o.filter(function (x) { return x[0] === v; })[0];
+  return o ? o[1] : String(v);
+}
+function onList(k) { return Object.keys(S[k] || {}).filter(function (x) { return S[k][x]; }).map(function (x) { return optLabel(k, x); }); }
+/* 見積書の紙面(#paper)を、そのままMarkdownに写す */
+function paperMd() {
+  var el = document.getElementById("paper"), out = [];
+  out.push("# " + el.querySelector("h1").textContent.replace(/\s+/g, ""));
+  out.push(Array.prototype.map.call(el.querySelectorAll(".meta span"), function (x) { return x.textContent.trim(); }).join(" / "));
+  var to = el.querySelector(".to"); if (to) out.push("宛先 " + to.textContent.replace(/\s+/g, " ").trim());
+  var from = el.querySelector(".from"); if (from) out.push("発行 " + from.innerText.replace(/\s+/g, " ").trim());
+  var tb = el.querySelector(".totalbox"); if (tb) out.push("**" + tb.innerText.replace(/\s+/g, " ").trim() + "**");
+  Array.prototype.forEach.call(el.querySelectorAll(".blk"), function (b) {
+    var h = b.querySelector("h3"); if (h) out.push("## " + h.textContent.trim());
+    Array.prototype.forEach.call(b.children, function (c) {
+      if (c.matches("dl.kv")) {
+        var r = [], dts = c.querySelectorAll("dt");
+        Array.prototype.forEach.call(dts, function (dt) { r.push([dt.textContent, dt.nextElementSibling ? dt.nextElementSibling.innerText.trim().replace(/\s*\n\s*/g, " / ") : ""]); });
+        out.push(mdTable(["項目", "内容"], r));
+      } else if (c.matches("table")) {
+        var head = Array.prototype.map.call(c.querySelectorAll("thead th"), function (x) { return x.textContent; });
+        var body = Array.prototype.map.call(c.querySelectorAll("tbody tr"), function (tr) {
+          var grp = tr.classList.contains("grp"), cells = [];
+          Array.prototype.forEach.call(tr.children, function (td) {
+            var t = td.innerText.trim().replace(/\s*\n\s*/g, " "); if (grp && t) t = "**" + t + "**";
+            cells.push(t); for (var k = 1; k < (+td.getAttribute("colspan") || 1); k++) cells.push("");
+          });
+          while (cells.length < head.length) cells.push(""); return cells.slice(0, head.length);
+        });
+        out.push(mdTable(head, body));
+      } else if (c.matches(".sums")) {
+        var d = Array.prototype.map.call(c.children, function (x) { return x.textContent.trim(); }), r2 = [];
+        for (var i = 0; i + 1 < d.length; i += 2) r2.push([d[i], d[i + 1]]);
+        out.push(mdTable(["区分", "金額"], r2));
+      } else if (c.matches("ul")) {
+        out.push(Array.prototype.map.call(c.querySelectorAll("li"), function (li) { return "- " + li.textContent.trim(); }).join("\n"));
+      }
+    });
+  });
+  return out.join("\n\n");
+}
+/* スケジュールや集客の資料を作るための、運営と集客の詳細 */
+function opsMd() {
+  var q = compute(), d0 = parseISO(S.date), out = ["## 運営と集客の詳細(資料作成用)", "見積書の入力内容から書き出した、当日までの運営スケジュールと集客の計画を作るための情報です。金額は見積書の明細と同じです。"];
+  var days = [];
+  for (var i = 0; i < nDays(); i++) days.push([(i + 1) + "日目", d0 ? jdate(addDays(d0, i)) : "未定", S.times[i] ? S.times[i].s + "〜" + S.times[i].e : "未定"]);
+  out.push("### 日程");
+  var key = [["告知開始", d0 ? jdate(addDays(d0, -S.promoDays)) : "開催の" + S.promoDays + "日前", "開催の" + S.promoDays + "日前"],
+    ["申込締切", d0 ? jdate(addDays(d0, -S.closeDays)) : "開催の" + S.closeDays + "日前", "開催の" + S.closeDays + "日前"]];
+  if (dvOn("briefing")) key.push(["参加者向けの事前説明会", d0 ? jdate(addDays(d0, -7)) : "開催の7日前", S.briefN + "回"]);
+  if (S.review) key.push(["評価レポートの納品", d0 ? jdate(addDays(d0, nDays() - 1 + 7)) : "開催の7日後", ""]);
+  out.push(mdTable(["予定", "日付", "目安"], key));
+  out.push(mdTable(["開催日", "日付", "時間"], days));
+  out.push("### イベントの形");
+  out.push(mdTable(["項目", "内容"], [
+    ["形式", fmtName()], ["開催方法", S.mode || "未定"], ["参加学生", S.people + "人(" + S.team + "人×" + teams() + "チーム)"],
+    ["申込者の見込み", S.apps + "人"], ["宿泊", S.nights ? S.nights + "泊(" + (S.stayName.trim() || "宿泊先は未定") + ")" : "なし"],
+    ["会場", (S.venue ? optLabel("venue", S.venue) : "未定") + (S.venueName.trim() ? " " + S.venueName.trim() : "") + (S.venue === "rent" && S.venueAddr.trim() ? "(" + S.venueAddr.trim() + ")" : "")],
+    ["審査会場", S.judgeVenueName.trim() || "イベントの会場と同じ"],
+    ["懇親会", S.party ? "あり。会場は" + partyVenue() : "なし"],
+    ["食事", onList("meals").join("、") || "なし"],
+    ["司会", S.mc === "御社" ? "御社" : S.mc === "社内" ? "Nativiaのディレクター" : "未定"],
+    ["メンターと審査員", "御社が手配" + (S.judges ? "(外部の審査員 " + S.judges + "人)" : "")]
+  ]));
+  out.push("### 当日の運営スタッフ");
+  out.push(mdTable(["役割", "人数", "主な仕事"], ROLES.map(function (r) { return [r[1], roleCount(r) + "人", r[2]]; }).concat([["合計", staffN() + "人", "1人あたり " + hfmt(totalWorkH()) + "(準備と片付けを含む)"]])));
+  out.push("### 開催までの準備と担当");
+  var dv = [], none = [];
+  DELIV.forEach(function (g) { g[1].forEach(function (it) {
+    if (it.show && !it.show()) return; var v = dvOf(it), nm = it.name.replace(/\(.*\)$/, "");
+    if (v === "none") { none.push(nm); return; }
+    var n = it.qty ? it.qty() : it.cnt ? S[it.cnt.k] : 1, qtyTxt = /^\d/.test(it.unit) ? n + "回(" + it.unit + "ごと)" : n + it.unit;
+    dv.push([g[0], nm, v === "nv" ? "Nativia" : "御社", qtyTxt]);
+  }); });
+  out.push(dv.length ? mdTable(["分類", "成果物", "担当", "数量"], dv) : "Nativiaか御社が作る成果物はまだ選ばれていません。");
+  if (none.length) out.push("今回は作らないもの " + none.join("、"));
+  out.push("### 集客");
+  var ch = [];
+  if (S.promo.own) clubNames().forEach(function (c) { ch.push(["学生団体への告知", c, CLUB_VIEWS[c] ? "1回の告知の閲覧 約" + num(CLUB_VIEWS[c]) + "人" : "閲覧数は未確認"]); });
+  if (S.promo.univ || dvOn("flyer") || dvOn("tate")) {
+    var how = (dvOn("flyer") ? ["チラシ"] : []).concat(dvOn("tate") ? ["立て看板"] : []).join("と") || "方法は未定";
+    CAMPUS.forEach(function (c) { if (S.univSel[campKey(c)]) ch.push(["大学での広告(" + how + ")", campKey(c), c[2] ? "通う学生 約" + num(c[2]) + "人(" + c[3] + ")" : "学生数は不明"]); });
+    listNames(S.univNames).forEach(function (u) { ch.push(["大学での広告(" + how + ")", u, "学生数は未確認"]); });
+  }
+  if (S.promo.ads) ch.push(["SNS広告", "予算 " + (S.adsAmt ? num(S.adsAmt) + "円" : "未定"), "表示回数は予算と配信設定しだい"]);
+  if (dvOn("sns")) ch.push(["SNSの告知投稿", S.posts + "投稿", "Nativiaと御社のアカウント"]);
+  if (S.promo.site) SITES.forEach(function (m) { if (S.siteSel[m[0]]) ch.push(["イベント告知サイト", m[1], REACH_NOTE[m[0]] || ""]); });
+  if (S.promo.media) { MEDIA.forEach(function (m) { if (S.mediaSel[m[0]]) ch.push(["学生向けの有料媒体", m[1], REACH_NOTE[m[0]] || ""]); }); listNames(S.mediaOther).forEach(function (m) { ch.push(["学生向けの有料媒体", m, ""]); }); }
+  if (S.promo.infl) inflRows().forEach(function (r) { ch.push(["インフルエンサー", (r.n.trim() || "未定") + " " + r.sns, r.f ? "フォロワー 約" + num(r.f) + "人" : "フォロワー数は未確認"]); });
+  out.push(ch.length ? mdTable(["やり方", "告知先", "規模"], ch) : "集客の方法はまだ選ばれていません。");
+  if (S.promo.media || S.promo.site) out.push("有料媒体と告知サイトの掲載期間は " + S.adMonths + "か月です。媒体の利用者数は全体の規模で、1回の掲載で見る人数ではありません。");
+  out.push(mdTable(["集客の目標", "内容"], [["閲覧数", S.kpiReach ? num(S.kpiReach) + "人" : "未設定"], ["応募数", S.kpiApps ? num(S.kpiApps) + "人" : "未設定"], ["参加学生", S.people + "人"]]));
+  out.push("### ターゲット像");
+  out.push(mdTable(["項目", "内容"], [["学年", onList("tgGrade").join("、") || "指定なし"], ["専攻", onList("tgMajor").join("、") || "指定なし"], ["志望・関心", onList("tgRole").join("、") || "指定なし"], ["大学や地域", S.tgArea.trim() || "指定なし"], ["求める人物像", S.tgNote.trim() || "指定なし"]]));
+  out.push("### 賞、機材、制作物");
+  out.push(mdTable(["項目", "内容"], [
+    ["賞金", [["1位", S.p1], ["2位", S.p2], ["3位", S.p3]].filter(function (x) { return x[1]; }).map(function (x) { return x[0] + " " + num(x[1]) + "円"; }).concat(S.spAmt && S.spCount ? ["特別賞 " + num(S.spAmt) + "円×" + S.spCount] : []).join("、") || "なし"],
+    ["賞品・副賞", onList("award").join("、") || "なし"],
+    ["Nativiaに借りる機材", onList("eq").join("、") || "なし"],
+    ["Nativiaが用意する制作物", onList("pr").join("、") || "なし"]
+  ]));
+  if (q.byClient.length) out.push("御社で行うこと " + q.byClient.join("、"));
+  return out.join("\n\n");
+}
+function quoteMd() { return paperMd() + "\n\n---\n\n" + opsMd() + "\n"; }
+function mdFileName() { return "見積書_" + ((S.client || "").replace(/[\\/:*?"<>|\s]+/g, "") || "宛先未定") + "_" + (viewerNo || quoteNo()) + ".md"; }
+async function saveMd(btn) {
+  var t = quoteMd(), name = mdFileName();
+  var dl = null; try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
+  if (dl) { try { await dl.save({ filename: name, data: t }); flashBtn(btn, "保存しました"); } catch (e) { flashBtn(btn, e && e.code === "declined" ? "取りやめました" : "保存できませんでした"); } return; }
+  if (!framed) { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type: "text/markdown" })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); flashBtn(btn, "保存しました"); return; }
+  copyText(t, btn, btn.textContent);
+}
+function flashBtn(b, msg) { var o = b.dataset.label || b.textContent; b.dataset.label = o; b.textContent = msg; setTimeout(function () { b.textContent = o; }, 1600); }
+
+/* ---------- テキストでコピー ---------- */
+document.getElementById("copyBtn").addEventListener("click", function () {
+  var b = this, t = quoteMd();
+  function done(msg) { b.textContent = msg; setTimeout(function () { b.textContent = "Markdownでコピー"; }, 1600); }
+  try {
+    navigator.clipboard.writeText(t).then(function () { done("コピーしました"); }, function () { fallback(t); done("選択しました。コピーしてください"); });
+  } catch (e) { fallback(t); done("選択しました。コピーしてください"); }
+});
+function fallback(t) {
+  var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.top = "0"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e) {} setTimeout(function () { ta.remove(); }, 1000);
+}
+document.getElementById("nextNo").addEventListener("click", function () {
+  var d = parseISO(S.issue) || new Date(); var key = "nv_quote_seq_" + iso(d); save(key, load(key, 1) + 1); renderPaper();
+});
+var resetArmed = false;
+document.getElementById("resetBtn").addEventListener("click", function () {
+  if (!resetArmed) { resetArmed = true; this.textContent = "もう一度押すと戻します"; var b = this; setTimeout(function () { resetArmed = false; b.textContent = "入力を最初に戻す"; }, 3000); return; }
+  resetArmed = false; this.textContent = "入力を最初に戻す"; S = clone(DEFAULTS); commit(true);
+});
+// 印刷は、ファイルをブラウザで直接開いたときだけ使える
+var framed = true; try { framed = window.self !== window.top; } catch (e) { framed = true; }
+var pb = document.getElementById("printBtn");
+if (!framed) { pb.hidden = false; pb.addEventListener("click", function () { window.print(); }); }
+
+var app = document.getElementById("app");
+function view(v) { app.dataset.view = v; document.getElementById("tabForm").setAttribute("aria-selected", v === "form"); document.getElementById("tabPaper").setAttribute("aria-selected", v === "paper"); }
+document.getElementById("tabForm").addEventListener("click", function () { view("form"); });
+document.getElementById("tabPaper").addEventListener("click", function () { view("paper"); });
+
+/* ---------- 共有リンク(見積の内容をリンクの中に入れる) ---------- */
+function b64url(bytes) { var bin = ""; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function unb64url(t) { t = t.replace(/-/g, "+").replace(/_/g, "/"); while (t.length % 4) t += "="; var bin = atob(t), a = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+async function pipeBytes(bytes, stream) { var r = new Response(new Blob([bytes]).stream().pipeThrough(stream)); return new Uint8Array(await r.arrayBuffer()); }
+/* 共有リンクを短くするため、凍結した基準値(v2)との差分と、単価を決まった順の配列で入れる。
+   LINK_BASE_2 と PRICE_ORDER_2 は書き換えない。単価の項目を足したときは、PRICE_ORDER_2 にない単価を x に名前つきで入れる。新しい状態の項目は DEFAULTS との差分だけを入れる。 */
+var LINK_BASE_2 = {"client":"","dept":"","honor":"御中","validity":30,"issuer":"pre","invoice":"","format":null,"mode":null,"days":1,"people":40,"team":4,"nights":0,"date":"","times":[{"s":"10:00","e":"18:00"}],"promoWeeks":6,"closeDays":7,"review":false,"roleN":{"dir":0,"venue":0,"comm":0,"photo":0,"judge":0,"spare":0},"adMonths":1,"clubSel":{},"clubOther":"","mediaSel":{},"siteSel":{},"univNames":"","inflNames":"","dvDisc":{},"discAmt":0,"discNote":"","tgGrade":{},"tgMajor":{},"tgRole":{},"tgArea":"","tgNote":"","kpiReach":0,"kpiApps":0,"mediaOther":"","mediaOtherCost":0,"venueName":"","judgeVenueName":"","judgeVenueCost":0,"conf":{},"mc":null,"follow":false,"mentor":false,"movie":false,"promo":{"own":false,"ads":false,"univ":false,"site":false,"media":false,"infl":false},"dv":{},"visN":1,"posts":1,"apps":20,"briefN":1,"adsAmt":null,"inflAmt":null,"venue":null,"venueRate":null,"meals":{"breakfast":false,"lunch":false,"dinner":false,"snack":false},"party":false,"corp":0,"stayRate":null,"p1":0,"p2":0,"p3":0,"spCount":0,"spAmt":0,"award":{"trophy":false,"medal":false,"cert":false},"judges":0,"judgeFee":null,"travelMode":null,"travel":0,"credit":0,"eq":{"proj":false,"audio":false,"light":false,"wifi":false,"power":false,"pc":false,"monitor":false,"stream":false,"nuboard":false,"stationery":false,"desk":false,"first":false},"wifiN":1,"pcN":1,"monN":1,"pr":{"name":false,"sign":false,"panel":false,"cert":false,"board":false,"tshirt":false,"sticker":false,"tote":false},"depositOn":null,"depositPct":50,"balance":null,"note":""};
+var PRICE_ORDER_2 = ["d_plan","d_runbook","d_rules","d_lp","d_form","d_visual","d_flyer","d_sns","d_apps","d_screen","d_themeSlides","d_guide","d_brief","d_ceremony","d_op","d_tech","d_criteria","d_sheets","d_judgeBrief","review_pp","follow","mentor","movie","rate","extra_h","ratio_venue","ratio_photo","club_ad","m_onecareer_init","m_onecareer_month","m_mynavi","m_rikunabi","m_wantedly_month","m_paiza","m_bizcon_free","m_bizcon_light","m_bizcon_premium","m_toryumon_free","m_toryumon_pickup","m_koubo_new","s_connpass","s_techplay","s_peatix","s_doorkeeper_month","breakfast","lunch","dinner","snack","party","venue_unknown","eq_proj","eq_audio","eq_light","eq_wifi","eq_power","eq_pc","eq_monitor","eq_stream","eq_nuboard","eq_stationery","eq_desk","eq_first","pr_name","pr_sign","pr_panel","pr_cert","pr_trophy","pr_medal","pr_board","pr_tshirt","pr_sticker","pr_tote"];
+var PRICE_BASE_2 = [200000,50000,30000,150000,20000,10000,120000,5000,10000,1000,50000,30000,50000,120000,100000,100000,50000,20000,30000,5000,200000,300000,150000,1500,2,20,10,20000,400000,100000,800000,300000,65000,0,0,50000,100000,0,200000,100000,0,0,0,1650,800,1000,1500,500,3000,300000,20000,30000,50000,3000,700,10000,5000,80000,300,300,30000,3000,300,10000,80000,2000,15000,1500,3000,2500,100,800];
+var LINK_SKIP = { open: 1, dayTab: 1, issue: 1 };
+async function encodeQuote() {
+  var d = {};
+  Object.keys(S).forEach(function (k) { if (LINK_SKIP[k]) return; if (JSON.stringify(S[k]) !== JSON.stringify(k in LINK_BASE_2 ? LINK_BASE_2[k] : DEFAULTS[k])) d[k] = S[k]; });
+  var json = JSON.stringify({ v: 2, n: quoteNo(), i: S.issue, d: d, p: (function () { var o = {}; PRICE_ORDER_2.forEach(function (k, i) { if (P[k] !== PRICE_BASE_2[i]) o[i] = P[k]; }); return o; })(), x: (function () { var o = {}; PRICE_DEFS.forEach(function (g) { g[1].forEach(function (d) { if (PRICE_ORDER_2.indexOf(d[0]) < 0 && P[d[0]] !== d[2]) o[d[0]] = P[d[0]]; }); }); return o; })() });
+  return b64url(await pipeBytes(new TextEncoder().encode(json), new CompressionStream("deflate-raw")));
+}
+function applyQuote(data) {
+  if (data.v === 2) {
+    S = clone(LINK_BASE_2); Object.keys(data.d).forEach(function (k) { S[k] = data.d[k]; }); S.issue = data.i;
+    if (data.d.promoDays == null) S.promoDays = 7 * S.promoWeeks;
+    PRICE_ORDER_2.forEach(function (k, i) { P[k] = data.p[i] != null ? data.p[i] : PRICE_BASE_2[i]; });
+    PRICE_DEFS.forEach(function (g) { g[1].forEach(function (d) { if (PRICE_ORDER_2.indexOf(d[0]) < 0) P[d[0]] = data.x && data.x[d[0]] != null ? data.x[d[0]] : d[2]; }); });
+    viewerNo = data.n;
+  } else {
+    S = data.S; Object.keys(data.P || {}).forEach(function (k) { P[k] = data.P[k]; }); viewerNo = data.no;
+  }
+  Object.keys(DEFAULTS).forEach(function (k) { if (S[k] === undefined) S[k] = clone(DEFAULTS[k]); });
+}
+async function decodeQuote(tok) { var bytes = await pipeBytes(unb64url(tok), new DecompressionStream("deflate-raw")); return JSON.parse(new TextDecoder().decode(bytes)); }
+var viewerNo = null;
+/* ---------- 確認して発行する ---------- */
+var flow = document.getElementById("flowBox");
+function checksFor(q) {
+  var a = [];
+  if (!S.client.trim()) a.push(["warn", "宛先の会社名が入っていません。"]);
+  if (!S.format) a.push(["warn", "形式(アイデアソン、ハッカソン、ビジネスコンテスト)が選ばれていません。"]);
+  if (!S.date) a.push(["warn", "開催日が入っていません。"]);
+  if (!S.venue) a.push(["warn", "会場が選ばれていません。"]);
+  if (!S.mode) a.push(["warn", "開催方法が選ばれていません。"]);
+  if (q.feeSum <= 0) a.push(["warn", "代行費が0円です。"]);
+  if (q.staff === 0) a.push(["info", "当日の運営スタッフが0人です。"]);
+  var est = q.cost.filter(function (x) { return !x.fixed; }).length;
+  if (est) a.push(["info", "見込みの金額が" + est + "件あります(" + yen(q.estSum) + "、税抜)。"]);
+  if (q.tbd.length) a.push(["info", "金額が未定の項目があります(" + q.tbd.join("、") + ")。"]);
+  if (!S.depositOn) a.push(["info", "着手金は「なし」になっています。"]);
+  if (!S.balance) a.push(["info", "残金の支払期限が選ばれていません(見積書には「別途ご相談」と出ます)。"]);
+  return a;
+}
+function stepsHtml(n) { return '<div class="steps">' + ["1 入力", "2 確認", "3 発行"].map(function (t, i) { return '<span class="' + (i + 1 === n ? "on" : "") + '">' + t + "</span>"; }).join("") + "</div>"; }
+function showReview() {
+  document.documentElement.classList.add("reviewing"); app.dataset.view = "paper"; renderPaper();
+  var q = compute(), c = checksFor(q), warns = c.filter(function (x) { return x[0] === "warn"; }).length;
+  flow.innerHTML = stepsHtml(2) + '<b style="font-size:14px">見積書の内容を確認してください</b>' +
+    (c.length ? '<ul class="checks">' + c.map(function (x) { return '<li class="' + x[0] + '">' + esc(x[1]) + "</li>"; }).join("") + "</ul>" : '<div class="msg">気になる点は見つかりませんでした。</div>') +
+    '<div class="msg">合計 ' + yen(q.total) + "(税込)/ 見積番号 " + quoteNo() + (warns ? " / 要確認の項目が" + warns + "件あります。そのまま発行もできます。" : "") + "</div>" +
+    '<div class="row"><button class="btn" type="button" id="flowBack">入力に戻る</button><button class="btn primary" type="button" id="flowIssue">この内容で発行する</button></div>';
+  flow.hidden = false; window.scrollTo(0, 0);
+  document.getElementById("flowBack").onclick = backToInput;
+  document.getElementById("flowIssue").onclick = issueQuote;
+}
+async function issueQuote() {
+  var no = quoteNo(); viewerNo = no;
+  var d = parseISO(S.issue) || new Date(), key = "nv_quote_seq_" + iso(d); save(key, load(key, 1) + 1);
+  renderPaper();
+  var url;
+  try { url = (VIEWER_URL || location.href.split("#")[0]) + "#q." + (await encodeQuote()); } catch (e) { url = ""; }
+  var q = compute();
+  var rec = { no: no, client: S.client.trim(), dept: S.dept.trim(), format: fmtName(), eventDate: S.date || "", total: q.total, fee: q.feeSum - q.discAll, issuedAt: new Date().toISOString(), url: url || "" };
+  var where = await saveIssued(rec);
+  var sheet = await appendToSheet(rec);
+  flow.innerHTML = stepsHtml(3) + '<b style="font-size:14px">見積番号 ' + esc(no) + " を発行しました</b>" +
+    '<div class="msg">発行した見積の一覧に保存しました(' + (where === "db" ? "メンバーと共有" : "このブラウザだけに保存") + ")。" + (sheet.ok ? "スプレッドシートにも1行追加しました。" : esc(sheet.why) + "。下の「スプレッドシート用に1行コピー」で貼り付けてください。") + "</div>" +
+    '<div class="msg">送り方を選んでください。共有URLを開くと、入力画面のない見積書だけが表示されます。URLの中に見積の内容が入っているので、あとで入力を変えても送った内容は変わりません。</div>' +
+    (url ? '<div class="row"><input id="shareUrl" readonly aria-label="共有URL" value="' + esc(url) + '"><button class="btn" id="shareCopy" type="button">URLをコピー</button></div><div class="msg">URLの長さ ' + url.length + "文字</div>" : '<div class="msg">このブラウザでは共有URLを作れません。PDFを使ってください。</div>') +
+    '<div class="row"><button class="btn" type="button" id="flowRow">スプレッドシート用に1行コピー</button><a class="btn" href="' + SHEET_URL + '" target="_blank" rel="noopener">見積の一覧(スプレッドシート)を開く</a></div><div class="msg">コピーした行を、スプレッドシートの空いている行のA列に貼り付けてください。</div>' +
+    '<div class="row"><button class="btn primary" type="button" id="flowPdf">PDFで保存</button><button class="btn" type="button" id="flowMdCopy">Markdownでコピー</button><button class="btn" type="button" id="flowMd">Markdownで保存</button><button class="btn" type="button" id="flowNew">入力に戻る(次の見積を作る)</button></div>';
+  var cp = document.getElementById("shareCopy");
+  if (cp) cp.onclick = function () {
+    var inp = document.getElementById("shareUrl"), b = this;
+    function done(m) { b.textContent = m; setTimeout(function () { b.textContent = "URLをコピー"; }, 1600); }
+    try { navigator.clipboard.writeText(inp.value).then(function () { done("コピーしました"); }, function () { inp.select(); done("選択しました。コピーしてください"); }); }
+    catch (e) { inp.select(); done("選択しました。コピーしてください"); }
+  };
+  document.getElementById("flowPdf").onclick = function () { savePdf(this); };
+  document.getElementById("flowMdCopy").onclick = function () { copyText(quoteMd(), this, "Markdownでコピー"); };
+  document.getElementById("flowMd").onclick = function () { saveMd(this); };
+  document.getElementById("flowRow").onclick = function () { copyText(tsvRow(rec), this, "スプレッドシート用に1行コピー"); };
+  document.getElementById("flowNew").onclick = backToInput;
+}
+function backToInput() {
+  viewerNo = null; flow.hidden = true; pdfMsg("");
+  document.documentElement.classList.remove("reviewing"); view("form"); renderForm(); renderPaper();
+}
+document.getElementById("reviewBtn").addEventListener("click", showReview);
+
+/* ---------- 発行した見積の一覧 ---------- */
+function sheetRow(x) { return [x.no, (x.issuedAt || "").slice(0, 10), x.client || "", x.dept || "", x.format || "", x.eventDate || "", x.total || 0, x.fee || 0, x.url || "", "送付前", ""]; }
+async function appendToSheet(rec) {
+  var mcp = null; try { mcp = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch (e) { mcp = null; }
+  if (!mcp) return { ok: false, why: "この画面ではスプレッドシートに書き込めません" };
+  try { await mcp.callTool("Google Sheets", "append_values", { spreadsheetId: SHEET_ID, range: "見積一覧!A1", values: [sheetRow(rec)] }); return { ok: true }; }
+  catch (e) {
+    var why = { needs_reauth: "Google Sheets のコネクタに再ログインが必要です", server_not_connected: "Google Sheets のコネクタがつながっていません", not_granted: "書き込みが許可されませんでした", consent_required: "書き込みが許可されませんでした", tool_error: "スプレッドシートへの書き込みでエラーが出ました" }[e && e.code] || "スプレッドシートに書き込めませんでした";
+    return { ok: false, why: why };
+  }
+}
+function tsvRow(x) {
+  return [x.no, (x.issuedAt || "").slice(0, 10), x.client || "", x.dept || "", x.format || "", x.eventDate || "", x.total || 0, x.fee || 0, x.url || "", "送付前", ""].map(function (v) { return String(v).replace(/[\t\n]/g, " "); }).join("\t");
+}
+function copyText(t, b, label) {
+  function done(m) { b.textContent = m; setTimeout(function () { b.textContent = label; }, 1800); }
+  try { navigator.clipboard.writeText(t).then(function () { done("コピーしました"); }, function () { fallback(t); done("選択しました。コピーしてください"); }); }
+  catch (e) { fallback(t); done("選択しました。コピーしてください"); }
+}
+async function getDb() { try { return window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { return null; } }
+async function saveIssued(rec) {
+  var db = await getDb();
+  if (db) { try { await db.collection("issued").doc(rec.no).set(rec); return "db"; } catch (e) {} }
+  var l = load("nv_issued", []).filter(function (x) { return x.no !== rec.no; }); l.unshift(rec); save("nv_issued", l.slice(0, 300)); return "local";
+}
+async function loadIssued() {
+  var out = [], seen = {}, shared = false, db = await getDb();
+  if (db) { try { var snap = await db.collection("issued").orderBy("issuedAt", "desc").limit(300).get(); snap.docs.forEach(function (d) { var x = d.data(); if (x && !seen[x.no]) { seen[x.no] = 1; out.push(x); } }); shared = true; } catch (e) {} }
+  load("nv_issued", []).forEach(function (x) { if (!seen[x.no]) { seen[x.no] = 1; out.push(x); } });
+  out.sort(function (a, b) { return (b.issuedAt || "").localeCompare(a.issuedAt || ""); });
+  return { list: out, shared: shared };
+}
+var listBox = document.getElementById("listBox");
+document.getElementById("listBtn").addEventListener("click", async function () {
+  if (!listBox.hidden) { listBox.hidden = true; return; }
+  listBox.hidden = false; listBox.innerHTML = '<div class="msg">一覧を読み込んでいます…</div>';
+  var r = await loadIssued();
+  listBox.innerHTML = '<div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:14px">発行した見積の一覧(' + r.list.length + '件)</b><span class="row"><button class="btn" type="button" id="listTsv">全件をスプレッドシート用にコピー</button><a class="btn" href="' + SHEET_URL + '" target="_blank" rel="noopener">スプレッドシートを開く</a><button class="btn" type="button" id="listClose">閉じる</button></span></div>' +
+    '<div class="msg">' + (r.shared ? "見積ツールを編集できるメンバーと共有している一覧です。" : "この一覧は、いま使っているブラウザにだけ保存されています。") + '</div>' +
+    (r.list.length ? '<div class="lwrap"><table class="ltable"><thead><tr><th>見積番号</th><th>発行日</th><th>宛先</th><th>形式</th><th>開催日</th><th class="n">合計(税込)</th><th>共有URL</th></tr></thead><tbody>' +
+      r.list.map(function (x, i) {
+        return "<tr><td>" + esc(x.no) + "</td><td>" + esc(jdate(new Date(x.issuedAt))) + "</td><td>" + esc(x.client || "(宛先なし)") + "</td><td>" + esc(x.format || "") + "</td><td>" + esc(x.eventDate ? jdate(parseISO(x.eventDate)) : "未定") + '</td><td class="n">' + yen(x.total || 0) + "</td><td>" +
+          (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">開く</a> <button class="btn" type="button" data-copyurl="' + i + '" style="padding:2px 8px;font-size:12px">コピー</button>' : "なし") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" : '<div class="msg">まだ発行した見積はありません。「見積書を確認する」から発行すると、ここに残ります。</div>');
+  document.getElementById("listClose").onclick = function () { listBox.hidden = true; };
+  document.getElementById("listTsv").onclick = function () { copyText(r.list.slice().reverse().map(tsvRow).join("\n"), this, "全件をスプレッドシート用にコピー"); };
+  listBox.querySelectorAll("[data-copyurl]").forEach(function (b) {
+    b.onclick = function () { var u = r.list[+b.dataset.copyurl].url; try { navigator.clipboard.writeText(u).then(function () { b.textContent = "コピーしました"; }, function () { b.textContent = "コピーできませんでした"; }); } catch (e) { b.textContent = "コピーできませんでした"; } };
+  });
+});
+
+/* ---------- PDFで保存 ---------- */
+function pdfMsg(t) { var m = document.getElementById("pdfMsg"); m.textContent = t || ""; m.hidden = !t; }
+async function buildPdf() {
+  var prevView = app.dataset.view; app.dataset.view = "paper";
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+  var JsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!JsPDF || !window.html2canvas) throw new Error("lib");
+  var pdf = new JsPDF({ unit: "mm", format: "a4", orientation: "portrait" }), first = true;
+  var els = [document.getElementById("paper"), document.getElementById("basis")];
+  for (var i = 0; i < els.length; i++) {
+    var canvas = await window.html2canvas(els[i], { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    var pageH = Math.floor(canvas.width * 297 / 210);
+    for (var y = 0; y < canvas.height; y += pageH) {
+      var h = Math.min(pageH, canvas.height - y);
+      if (h < 40) break;
+      var c = document.createElement("canvas"); c.width = canvas.width; c.height = pageH;
+      var ctx = c.getContext("2d"); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+      if (!first) pdf.addPage(); first = false;
+      pdf.addImage(c.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+    }
+  }
+  app.dataset.view = prevView;
+  return pdf.output("blob");
+}
+document.getElementById("pdfBtn").addEventListener("click", function () { savePdf(this); });
+document.getElementById("mdBtn").addEventListener("click", function () { saveMd(this); });
+async function savePdf(b) {
+  b.disabled = true; pdfMsg("PDFを作っています…");
+  var name = "見積書_" + ((S.client || "").replace(/[\\/:*?"<>|\s]+/g, "") || "宛先未定") + "_" + (viewerNo || quoteNo()) + ".pdf";
+  try {
+    var blob = await buildPdf();
+    var dl = null; try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
+    if (dl) {
+      try { await dl.save({ filename: name, data: blob }); pdfMsg("PDFを保存しました。"); }
+      catch (e) { pdfMsg(e && e.code === "declined" ? "保存を取りやめました。" : "この画面ではPDFを保存できませんでした。"); }
+    } else if (!framed) {
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); pdfMsg("PDFを保存しました。");
+    } else { pdfMsg("この画面ではPDFを保存できません。共有リンクを開くか、ファイルをブラウザで直接開いてください。"); }
+  } catch (e) { pdfMsg("PDFを作れませんでした。ページを開き直して、もう一度試してください。"); }
+  b.disabled = false;
+}
+
+/* ---------- 起動 ---------- */
+/* 共有リンクの見積データ(q.…)を、URLの # のあと、? のあと、親ページの順に探す */
+function findToken() {
+  var cands = [location.hash, location.search, document.referrer];
+  try { if (window.parent !== window) cands.push(window.parent.location.href); } catch (e) {}
+  for (var i = 0; i < cands.length; i++) { var m = /[#?&]q[.=]([A-Za-z0-9_-]{10,})/.exec(cands[i] || ""); if (m) return m[1]; }
+  return "";
+}
+async function showQuoteFromLink() {
+  var t = findToken(); if (!t) return false;
+  try { applyQuote(await decodeQuote(t)); } catch (e) { return false; }
+  document.documentElement.classList.add("viewer");
+  app.dataset.view = "paper";
+  document.getElementById("basis").parentNode.hidden = false;
+  document.getElementById("pdfBtn").hidden = false;
+  renderPaper();
+  return true;
+}
+window.addEventListener("hashchange", function () { showQuoteFromLink(); });
+(async function boot() {
+  var h = findToken() ? "q." + findToken() : "";
+  if (h.indexOf("q.") === 0) {
+    try {
+      var data = await decodeQuote(h.slice(2));
+      applyQuote(data);
+      document.documentElement.classList.add("viewer");
+      app.dataset.view = "paper";
+      renderPaper();
+      return;
+    } catch (e) {}
+  }
+  if (VIEWER_ONLY) {
+    document.documentElement.classList.add("viewer");
+    document.getElementById("paper").innerHTML = '<p style="padding:40px 40px 8px;text-align:center">見積書のリンクが正しくありません。送られてきたリンクをもう一度開いてください。</p>' +
+      '<p style="padding:0 40px 40px;font-size:11px;color:#777;word-break:break-all">確認用 ページのURL ' + esc(location.href.slice(0, 160)) + ' / 開いた元 ' + esc((document.referrer || "なし").slice(0, 160)) + '</p>';
+    document.getElementById("basis").parentNode.hidden = true;
+    document.getElementById("pdfBtn").hidden = true;
+    return;
+  }
+  renderForm();
+  renderPaper();
+})();
+})();
+</script>
+</body>
+</html>
