@@ -228,8 +228,7 @@ var PRICE_DEFS = [
     ["d_lp", "告知ページ", 150000],
     ["d_form", "申込フォームと自動返信", 20000],
     ["d_visual", "告知画像(1点)", 10000],
-    ["d_univ_design", "大学での広告チラシと立て看板のデザイン", 30000],
-    ["d_flyer_univ", "大学での広告チラシ(1キャンパス)", 15000],
+    ["d_flyer_univ", "大学での広告 チラシとポスター(1キャンパス)", 50000],
     ["d_tate_univ", "大学での立て看板(1キャンパス)", 50000],
     ["d_sns", "SNSの告知投稿(1投稿)", 5000],
     ["d_apps", "申込者の管理(20人ごと)", 10000],
@@ -484,7 +483,7 @@ var SECTIONS = [
     { type: "step", k: "adMonths", label: "有料媒体と告知サイトの掲載期間", min: 1, max: 12, step: 1, suf: "か月", show: function () { return S.promo.media || S.promo.site; } },
     { type: "campus", show: function () { return S.promo.univ; } },
     { type: "text", k: "univNames", label: "そのほかの大学やキャンパス(読点で区切って入力)", ph: "例 東京都立大学 南大沢キャンパス、学習院大学 目白キャンパス", show: function () { return S.promo.univ; } },
-    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、上の「開催までの準備」の「大学での広告チラシ」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
+    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、上の「開催までの準備」の「大学での広告 チラシとポスター」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
     { type: "sites", show: function () { return S.promo.site; } },
     { type: "infl", show: function () { return S.promo.infl; } },
   ] },
@@ -813,9 +812,8 @@ var DELIV = [
     { k: "lp", name: "告知ページ", unit: "ページ", pk: "d_lp", def: "none" },
     { k: "form", name: "申込フォームと自動返信", unit: "式", pk: "d_form", def: "none" },
     { k: "visual", name: "告知画像(SNS・Web用)", unit: "点", pk: "d_visual", def: "none", cnt: { k: "visN", label: "画像の数", min: 1, max: 20, step: 1, suf: "点" } },
-    { k: "flyer", name: "大学での広告チラシ(印刷、掲示の申請、掲示と配布)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
-    { k: "tate", name: "大学での立て看板(制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
-    { k: "univDesign", name: "大学での広告チラシと立て看板のデザイン", unit: "式", pk: "d_univ_design", def: "none", show: function () { return dvOf(DV_BY.flyer) !== "none" || dvOf(DV_BY.tate) !== "none"; } },
+    { k: "flyer", name: "大学での広告 チラシとポスター(デザイン、印刷、掲示の申請、掲示と配布、撤去)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "tate", name: "大学での立て看板(デザイン、制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
     { k: "sns", name: "SNSの告知投稿", unit: "投稿", pk: "d_sns", def: "none", cnt: { k: "posts", label: "投稿の数", min: 1, max: 40, step: 1, suf: "投稿" } },
     { k: "apps", name: "申込者の管理(問い合わせ対応、リマインド、参加確定の連絡)", unit: "20人", pk: "d_apps", def: "none", qty: function () { return Math.ceil(S.apps / 20); }, cnt: { k: "apps", label: "申込者の見込み", min: 10, max: 1000, step: 10, suf: "人" } },
     { k: "screen", name: "書類選考", unit: "件", pk: "d_screen", def: "none", qty: function () { return S.apps; }, show: function () { return S.format === "biz"; } }
@@ -840,7 +838,7 @@ var DCNT = {}; DELIV.forEach(function (g) { g[1].forEach(function (it) { if (it.
 function dvOf(it) { return S.dv[it.k] || it.def; }
 function dvOn(k) { var f = null; DELIV.forEach(function (g) { g[1].forEach(function (it) { if (it.k === k) f = it; }); }); return f && (!f.show || f.show()) && dvOf(f) !== "none"; }
 var PROMO_NAMES = { own: "学生団体への告知", ads: "SNS広告", univ: "大学での広告", site: "イベント告知サイト", media: "学生向けの有料媒体", infl: "インフルエンサーへの告知依頼" };
-function promoText() { var a = []; var _own = S.promo.own && clubNames().length ? "学生団体(" + clubNames().join("、") + ")への告知" : null; var _media = S.promo.media ? MEDIA.filter(function (m) { return S.mediaSel[m[0]]; }).map(function (m) { return m[1]; }).concat(listNames(S.mediaOther)) : []; if (dvOn("sns")) a.push("SNSでの告知"); var _uw = (dvOn("flyer") ? ["チラシ"] : []).concat(dvOn("tate") ? ["立て看板"] : []); if (_uw.length && !S.promo.univ) a.push("大学での広告(" + _uw.join("と") + ")"); Object.keys(PROMO_NAMES).forEach(function (k) { if (!S.promo[k]) return; if (k === "own") { if (_own) a.push(_own); return; } if (k === "media") { if (_media.length) a.push("学生向けの有料媒体(" + _media.join("、") + ")"); return; } if (k === "univ") { var u = univList(); var ut = u.join("、") + (u.length && _uw.length ? "に" : "") + _uw.join("と"); a.push(ut ? "大学での広告(" + ut + ")" : PROMO_NAMES.univ); return; } if (k === "site") { var st = SITES.filter(function (m) { return S.siteSel[m[0]]; }).map(function (m) { return m[1]; }); if (st.length) a.push("イベント告知サイト(" + st.join("、") + ")"); return; } if (k === "infl") { var iv = inflRows().map(function (r) { return (r.n.trim() || "未定") + " " + r.sns; }); if (!iv.length) iv = listNames(S.inflNames); a.push(iv.length ? "インフルエンサーへの告知依頼(" + iv.join("、") + ")" : PROMO_NAMES.infl); return; } a.push(PROMO_NAMES[k]); }); return a.length ? a.join("、") : "未定"; }
+function promoText() { var a = []; var _own = S.promo.own && clubNames().length ? "学生団体(" + clubNames().join("、") + ")への告知" : null; var _media = S.promo.media ? MEDIA.filter(function (m) { return S.mediaSel[m[0]]; }).map(function (m) { return m[1]; }).concat(listNames(S.mediaOther)) : []; if (dvOn("sns")) a.push("SNSでの告知"); var _uw = (dvOn("flyer") ? ["チラシとポスター"] : []).concat(dvOn("tate") ? ["立て看板"] : []); if (_uw.length && !S.promo.univ) a.push("大学での広告(" + _uw.join("と") + ")"); Object.keys(PROMO_NAMES).forEach(function (k) { if (!S.promo[k]) return; if (k === "own") { if (_own) a.push(_own); return; } if (k === "media") { if (_media.length) a.push("学生向けの有料媒体(" + _media.join("、") + ")"); return; } if (k === "univ") { var u = univList(); var ut = u.join("、") + (u.length && _uw.length ? "に" : "") + _uw.join("と"); a.push(ut ? "大学での広告(" + ut + ")" : PROMO_NAMES.univ); return; } if (k === "site") { var st = SITES.filter(function (m) { return S.siteSel[m[0]]; }).map(function (m) { return m[1]; }); if (st.length) a.push("イベント告知サイト(" + st.join("、") + ")"); return; } if (k === "infl") { var iv = inflRows().map(function (r) { return (r.n.trim() || "未定") + " " + r.sns; }); if (!iv.length) iv = listNames(S.inflNames); a.push(iv.length ? "インフルエンサーへの告知依頼(" + iv.join("、") + ")" : PROMO_NAMES.infl); return; } a.push(PROMO_NAMES[k]); }); return a.length ? a.join("、") : "未定"; }
 var STD = "Nativiaの標準単価です。";
 var EQ = "レンタル料金に配送と設営を含めた見込みです。会場や御社に備え付けがあれば外せます。";
 function basisFor(x) {
@@ -853,9 +851,8 @@ function basisFor(x) {
     [/^告知ページ/, function () { return "外注の相場は、ノーコードの格安プランで5万〜10万円(構成と文章は含まない)、構成や文章まで含めると10万〜60万円です。Nativiaは文章を書いてノーコードで作るため、その間の15万円にしています。"; }],
     [/^申込フォーム/, function () { return "外注の相場は、自動返信と申込の記録まで含めて1万〜2万円です。その上限にしています。"; }],
     [/^告知画像/, function () { return "静止画のバナー1枚の外注相場は3,000〜1万円です。その上限にしています。"; }],
-    [/^大学での広告チラシと立て看板のデザイン/, function () { return "チラシのデザインの相場はフリーランスで1.5万〜5万円です。その間の3万円で、チラシと立て看板の2つの大きさに合わせて作ります。"; }],
-    [/^大学での広告チラシ/, function () { return "1キャンパスあたり、A4カラーの印刷200枚(1,000枚で5,000〜1万5,000円の相場から約3,000円)、掲示の申請と学内での掲示・配布に約4時間(1時間2,000円で8,000円)、移動に約2,000円かかり、合わせて約1万3,000円です。少し上の1万5,000円にしています。"; }],
-    [/^大学での立て看板/, function () { return "自立式の看板の制作相場は2万〜15万円です。学内用の簡易な立て看板(板と出力したシート)は材料と出力で約2万円、設置と撤去に2人で延べ約12時間(1時間2,000円で2万4,000円)、運搬に約6,000円かかり、1キャンパスあたり5万円にしています。立て看板は大学の許可が必要で、公認の学生団体の名義でしか出せない大学もあります。"; }],
+    [/^大学での広告/, function () { return "1キャンパスあたりの金額です。内訳の目安は、チラシとポスターのデザイン(複数キャンパスで共通、1.5万〜5万円の相場の一部)、ポスター数枚とチラシ200枚の印刷(約5,000円)、大学への掲示の申請と学内での掲示・配布・撤去(約8時間、1時間2,000円で約1万6,000円)、移動(約2,000円)です。大学内のポスター広告は、大学生協などの掲示枠で1枚1か月5万円(税別)、大学が直接募集する掲示枠でA3ポスター1枚1か月1万6,500円(税込)の例があり、それと同じくらいの水準にしています。"; }],
+    [/^大学での立て看板/, function () { return "自立式の看板の制作相場は2万〜15万円です。学内用の簡易な立て看板(板と出力したシート)は材料と出力で約2万円、設置と撤去に2人で延べ約12時間(1時間2,000円で2万4,000円)、運搬に約6,000円かかり、デザインを含めて1キャンパスあたり5万円にしています。立て看板は大学の許可が必要で、公認の学生団体の名義でしか出せない大学もあります。"; }],
     [/^SNSの告知投稿/, function () { return "画像を含む投稿の制作は、個人への依頼で1投稿2,500〜7,000円の例があります。その間の5,000円にしています。"; }],
     [/^申込者の管理/, function () { return "申込者1人あたり、受付の確認、リマインド2回、問い合わせへの対応で約15分かかると見込み、20人で約5時間、1時間2,000円として1万円にしています。"; }],
     [/^書類選考/, function () { return "応募書類1件を審査基準に沿って読み、評価をつけるのに約20分かかると見込み、1時間3,000円として1件1,000円にしています。"; }],
@@ -904,9 +901,10 @@ function renderBasis(q) {
   function rowsB(list) { return list.filter(function (x) { return x.skip !== "今回は発注なし"; }).map(function (x) { return "<tr><td>" + esc(x.name) + (x.skip ? "(" + esc(x.skip) + ")" : "") + '</td><td class="n">' + num(x.skip ? x.full : x.amt) + "</td><td>" + (x.skip ? "通常の金額です。今回の見積には含めていません。" : "") + (x.disc ? "通常は" + num(x.full) + "円のところ、" + x.disc + "としています。" : "") + esc(basisFor(x)) + "</td></tr>"; }).join(""); }
   document.getElementById("basis").innerHTML =
     "<h1>金額の根拠</h1>" + '<span class="sub">見積番号 ' + quoteNo() + " の別紙</span>" +
-    (q.prep.length ? '<div class="blk"><h3>開催までの準備</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.prep) + "</tbody></table></div>" : "") +
+    (q.prepShow.length ? '<div class="blk"><h3>開催までの準備</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.prepShow) + "</tbody></table></div>" : "") +
     '<div class="blk"><h3>当日の運営と開催後</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.fee) + "</tbody></table></div>" +
-    (q.cost.length ? '<div class="blk"><h3>実費(見込み・開催後に精算)</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.cost) + "</tbody></table></div>" : "") +
+    (q.ad.length ? '<div class="blk"><h3>広告費(集客と告知)</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.ad) + "</tbody></table></div>" : "") +
+    (q.costShow.length ? '<div class="blk"><h3>実費(見込み・開催後に精算)</h3><table class="items basis"><thead><tr><th style="width:28%">項目</th><th class="n" style="width:14%">金額(円)</th><th>根拠</th></tr></thead><tbody>' + rowsB(q.costShow) + "</tbody></table></div>" : "") +
     '<div class="blk"><h3>相場について</h3><ul class="notes"><li>相場は2026年10月時点で公開されている制作会社、レンタル業者、調査の情報をもとにしています。</li><li>実費は見込みの額です。開催後に、実際にかかった額で精算します。</li></ul></div>';
 }
 function compute() {
@@ -999,7 +997,13 @@ function compute() {
   var deposit = Math.floor((feeSum - discAll) * 1.1 * depositRate());
   cost.forEach(function (x) { var c = confOf(x); x.fixed = c.fixed; x.when = c.when; });
   var fixedCost = cost.filter(function (x) { return x.fixed; }).reduce(function (a, x) { return a + x.amt; }, 0);
-  return { discAll: discAll, tbd: mediaTbd, fixedSum: prepSum + daySum + fixedCost - discAll, estSum: costSum - fixedCost, mediaTbd: mediaTbd, prep: prep, fee: fee, prepSum: prepSum, daySum: daySum, cost: cost, byClient: byClient, feeSum: feeSum, costSum: costSum, sub: sub, tax: tax, total: total, deposit: deposit, staff: staff, staffCost: staffCost, days: d, hrs: hrs };
+  /* 見積書では、集客と告知にかかるお金を「広告費」としてまとめて見せる(合計の計算は変えない) */
+  var isAdPrep = function (x) { return /^大学での(広告|立て看板)/.test(x.name); };
+  var isAdCost = function (x) { return /^(学生団体への告知|SNS広告費|インフルエンサーへの告知依頼|掲載料 |告知サイト )/.test(x.name); };
+  var ad = prep.filter(isAdPrep).concat(cost.filter(isAdCost));
+  var prepShow = prep.filter(function (x) { return !isAdPrep(x); }), costShow = cost.filter(function (x) { return !isAdCost(x); });
+  var sumOf = function (a) { return a.reduce(function (t, x) { return t + x.amt; }, 0); };
+  return { ad: ad, adSum: sumOf(ad), prepShow: prepShow, prepShowSum: sumOf(prepShow), costShow: costShow, costShowSum: sumOf(costShow), discAll: discAll, tbd: mediaTbd, fixedSum: prepSum + daySum + fixedCost - discAll, estSum: costSum - fixedCost, mediaTbd: mediaTbd, prep: prep, fee: fee, prepSum: prepSum, daySum: daySum, cost: cost, byClient: byClient, feeSum: feeSum, costSum: costSum, sub: sub, tax: tax, total: total, deposit: deposit, staff: staff, staffCost: staffCost, days: d, hrs: hrs };
 }
 
 /* ---------- 見積書の描画 ---------- */
@@ -1081,9 +1085,10 @@ function renderPaper() {
     "</dl></div>" +
 
     '<div class="blk"><h3>明細</h3><table class="items"><thead><tr><th>項目</th><th class="n">数量</th><th class="n">単価(円)</th><th class="n">金額(円)</th></tr></thead><tbody>' +
-      (q.prep.length ? '<tr class="grp"><td colspan="3">開催までの準備' + (q.prep.some(function (x) { return x.skip; }) ? '<span style="font-weight:400;font-size:10px;color:var(--ink-muted)"> 全項目を発注した場合は ' + num(q.prep.reduce(function (a, x) { return a + (x.skip ? x.full : x.amt); }, 0)) + '円</span>' : "") + '</td><td class="n">' + num(q.prepSum) + "</td></tr>" + rows(q.prep) : "") +
+      (q.prepShow.length ? '<tr class="grp"><td colspan="3">開催までの準備' + (q.prepShow.some(function (x) { return x.skip; }) ? '<span style="font-weight:400;font-size:10px;color:var(--ink-muted)"> 全項目を発注した場合は ' + num(q.prepShow.reduce(function (a, x) { return a + (x.skip ? x.full : x.amt); }, 0)) + '円</span>' : "") + '</td><td class="n">' + num(q.prepShowSum) + "</td></tr>" + rows(q.prepShow) : "") +
       '<tr class="grp"><td colspan="3">当日の運営と開催後</td><td class="n">' + num(q.daySum) + "</td></tr>" + rows(q.fee) +
-      (q.cost.length ? '<tr class="grp"><td colspan="3">実費(見込み・開催後に精算)</td><td class="n">' + num(q.costSum) + "</td></tr>" + rows(q.cost) : "") +
+      (q.ad.length ? '<tr class="grp"><td colspan="3">広告費(集客と告知)</td><td class="n">' + num(q.adSum) + "</td></tr>" + rows(q.ad) : "") +
+      (q.costShow.length ? '<tr class="grp"><td colspan="3">実費(見込み・開催後に精算)</td><td class="n">' + num(q.costShowSum) + "</td></tr>" + rows(q.costShow) : "") +
     "</tbody></table>" +
     '<div class="sums">' + (q.discAll ? "<div>お値引き" + (S.discNote.trim() ? "(" + esc(S.discNote.trim()) + ")" : "") + "</div><div>−" + yen(q.discAll) + "</div>" : "") + '<div>小計</div><div>' + yen(q.sub) + "</div><div>消費税(10%)</div><div>" + yen(q.tax) + '</div><div class="g">合計</div><div class="g">' + yen(q.total) + "</div>" +
       (depositRate() > 0 ? "<div>うち着手金</div><div>" + yen(q.deposit) + "</div><div>残金</div><div>" + yen(q.total - q.deposit) + "</div>" : "") + "</div></div>" +
@@ -1197,7 +1202,7 @@ function opsMd() {
   var ch = [];
   if (S.promo.own) clubNames().forEach(function (c) { ch.push(["学生団体への告知", c, CLUB_VIEWS[c] ? "1回の告知の閲覧 約" + num(CLUB_VIEWS[c]) + "人" : "閲覧数は未確認"]); });
   if (S.promo.univ || dvOn("flyer") || dvOn("tate")) {
-    var how = (dvOn("flyer") ? ["チラシ"] : []).concat(dvOn("tate") ? ["立て看板"] : []).join("と") || "方法は未定";
+    var how = (dvOn("flyer") ? ["チラシとポスター"] : []).concat(dvOn("tate") ? ["立て看板"] : []).join("と") || "方法は未定";
     CAMPUS.forEach(function (c) { if (S.univSel[campKey(c)]) ch.push(["大学での広告(" + how + ")", campKey(c), c[2] ? "通う学生 約" + num(c[2]) + "人(" + c[3] + ")" : "学生数は不明"]); });
     listNames(S.univNames).forEach(function (u) { ch.push(["大学での広告(" + how + ")", u, "学生数は未確認"]); });
   }
