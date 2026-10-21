@@ -228,7 +228,7 @@ var PRICE_DEFS = [
     ["d_lp", "告知ページ", 150000],
     ["d_form", "申込フォームと自動返信", 20000],
     ["d_visual", "告知画像(1点)", 10000],
-    ["d_flyer_univ", "大学での広告 チラシとポスター(1キャンパス)", 50000],
+    ["d_flyer_univ", "大学での広告 チラシとポスターの制作(1キャンパス)", 20000],
     ["d_tate_univ", "大学での立て看板(1キャンパス)", 50000],
     ["d_sns", "SNSの告知投稿(1投稿)", 5000],
     ["d_apps", "申込者の管理(20人ごと)", 10000],
@@ -252,7 +252,7 @@ var PRICE_DEFS = [
     ["extra_h", "当日スタッフの準備と片付け(1日あたりの時間)", 2],
     ["ratio_venue", "会場係1人あたりの参加者数", 20],
     ["ratio_photo", "撮影・SNS係1人あたりの参加者数", 10],
-    ["club_ad", "学生団体への告知(1団体)", 20000]
+    ["club_ad", "学生団体への告知(1団体、謝礼なし)", 0]
   ]],
   ["学生向けの有料媒体(1回の告知)", [
     ["m_onecareer_init", "ONE CAREER(ワンキャリア) 初期費用", 400000],
@@ -414,16 +414,10 @@ function opts(arr) { return arr.map(function (x) { return Array.isArray(x) ? x :
 var TIMES = []; for (var h = 7; h <= 22; h++) { TIMES.push(pad(h) + ":00"); if (h < 22) TIMES.push(pad(h) + ":30"); }
 
 var SECTIONS = [
-  { t: "宛先と書類", c: [
+  { t: "宛先", sub: "見積書の宛名", c: [
     { type: "text", k: "client", label: "宛先の会社名" },
     { type: "text", k: "dept", label: "部署・担当者" },
-    { type: "seg", k: "honor", label: "敬称", o: opts(["御中", "様"]) },
-    { type: "row", c: [
-      { type: "date", k: "issue", label: "発行日" },
-      { type: "seg", k: "validity", label: "有効期限", o: opts([[14, "14日"], [30, "30日"], [60, "60日"]]) }
-    ] },
-    { type: "seg", k: "issuer", label: "発行者の名義", o: [["pre", "設立準備中"], ["reg", "登記後"]] },
-    { type: "text", k: "invoice", label: "インボイス登録番号(登録後に入力)", show: function () { return S.issuer === "reg"; }, ph: "T1234567890123" }
+    { type: "seg", k: "honor", label: "敬称", o: opts(["御中", "様"]) }
   ] },
   { t: "イベントの形", c: [
     { type: "seg", k: "format", label: "形式", o: [["idea", "アイデアソン", "考える"], ["hack", "ハッカソン", "作る"], ["biz", "ビジネスコンテスト", "事業にする"]], onset: applyFormat },
@@ -449,16 +443,24 @@ var SECTIONS = [
     { type: "relsel", k: "closeDays", label: "申込の締切", unit: 1, max: 30, word: "日前" },
     { type: "info", html: function () { return "事前説明会は「開催までの準備」で選びます(開催の1週間前に実施)"; } }
   ] },
-  { t: "開催までの準備", sub: "成果物ごとに、Nativiaが作るか御社で作るかを選ぶ", c: [
-    { type: "deliv" }
-  ] },
-  { t: "当日の運営と開催後", c: [
-    { type: "toggle", k: "review", label: "評価レポート(参加者ごとの評価と講評)" },
-    { type: "roles" },
-    { type: "info", html: function () { var a = []; for (var i = 0; i < nDays(); i++) a.push((i + 1) + "日目 " + hfmt(workH(i))); return "スタッフの稼働は開催時間に準備と片付けの" + P.extra_h + "時間を足して自動で計算します <em>" + a.join(" / ") + "</em>"; } },
-    { type: "seg", k: "mc", label: "司会", o: [["社内", "Nativiaが担当"], ["御社", "御社で担当"]] },
-    { type: "toggle", k: "movie", label: "撮影と当日編集のエンディングムービー" },
-    { type: "toggle", k: "follow", label: "開催後の採用フォロー" }
+  { t: "会場・食事・宿泊", sub: "実費", c: [
+    { type: "seg", k: "venue", label: "会場", o: [["office", "御社のオフィス"], ["rent", "外部の会場"], ["tbd", "未定(目安)"]] },
+    { type: "text", k: "venueName", label: "御社のオフィスの場所(住所、フロア、部屋)", ph: "例 東京都渋谷区○○1-2-3 ○○ビル10階 セミナールーム", show: function () { return S.venue === "office"; } },
+    { type: "text", k: "venueName", label: "会場の名前", ph: "例 ○○カンファレンスセンター 3階ホール", show: function () { return S.venue === "rent" || S.venue === "tbd"; } },
+    { type: "text", k: "venueAddr", label: "外部の会場の住所", ph: "例 東京都千代田区○○1-2-3", show: function () { return S.venue === "rent"; } },
+    { type: "number", k: "venueRate", label: "会場費 1日あたりの料金(税抜、なければ0)", suf: "円", show: function () { return S.venue === "rent"; } },
+    { type: "number", k: "venueExtra", label: "会場費 合計で払う費用(税抜。設営、清掃、付帯設備、パック料金など。なければ0)", suf: "円", show: function () { return S.venue === "rent"; } },
+    { type: "text", k: "venueExtraNote", label: "合計で払う費用の内容(任意)", ph: "例 プロジェクター・音響の利用料、前日搬入", show: function () { return S.venue === "rent"; } },
+    { type: "seg", k: "judgeSame", label: "審査会場", o: [[true, "イベントの会場と同じ"], [false, "別の場所"]] },
+    { type: "text", k: "judgeVenueName", label: "審査会場の名前や場所", ph: "例 御社 本社 会議室A", show: function () { return !S.judgeSame; } },
+    { type: "number", k: "judgeVenueCost", label: "審査会場の費用(なしは0、税抜)", suf: "円", show: function () { return !S.judgeSame; } },
+    { type: "multi", k: "meals", label: "食事(1日あたり)", o: [["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ["snack", "軽食と飲み物"]] },
+    { type: "toggle", k: "party", label: "懇親会(1回)" },
+    { type: "seg", k: "partyVenueOther", label: "懇親会の会場", o: [[false, "審査会場と同じ"], [true, "別の場所"]], show: function () { return S.party; } },
+    { type: "info", html: function () { return "懇親会は " + esc(partyVenue()) + " で行います。"; }, show: function () { return S.party && !S.partyVenueOther; } },
+    { type: "text", k: "partyVenueName", label: "懇親会の会場(名前や場所)", ph: "例 会場近くの○○レストラン", show: function () { return S.party && S.partyVenueOther; } },
+    { type: "step", k: "corp", label: "食事をとる御社の社員", min: 0, max: 50, step: 1, suf: "人" },
+
   ] },
   { t: "ターゲット像", sub: "どんな学生に来てほしいか", c: [
     { type: "multi", k: "tgGrade", label: "学年", o: [["b1", "学部1年"], ["b2", "学部2年"], ["b3", "学部3年"], ["b4", "学部4年"], ["m", "修士"], ["d", "博士"]] },
@@ -484,28 +486,21 @@ var SECTIONS = [
     { type: "step", k: "adMonths", label: "有料媒体と告知サイトの掲載期間", min: 1, max: 12, step: 1, suf: "か月", show: function () { return S.promo.media || S.promo.site; } },
     { type: "campus", show: function () { return S.promo.univ; } },
     { type: "text", k: "univNames", label: "そのほかの大学やキャンパス(読点で区切って入力)", ph: "例 東京都立大学 南大沢キャンパス、学習院大学 目白キャンパス", show: function () { return S.promo.univ; } },
-    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、上の「開催までの準備」の「大学での広告 チラシとポスター」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
+    { type: "info", html: function () { return "キャンパスに掲示するチラシと立て看板は、下の「開催までの準備」の「大学での広告 チラシとポスター」と「大学での立て看板」で選べます。"; }, show: function () { return S.promo.univ; } },
     { type: "sites", show: function () { return S.promo.site; } },
     { type: "infl", show: function () { return S.promo.infl; } },
+    { type: "reach" }
   ] },
-  { t: "会場・食事・宿泊", sub: "実費", c: [
-    { type: "seg", k: "venue", label: "会場", o: [["office", "御社のオフィス"], ["rent", "外部の会場"], ["tbd", "未定(目安)"]] },
-    { type: "text", k: "venueName", label: "御社のオフィスの場所(住所、フロア、部屋)", ph: "例 東京都渋谷区○○1-2-3 ○○ビル10階 セミナールーム", show: function () { return S.venue === "office"; } },
-    { type: "text", k: "venueName", label: "会場の名前", ph: "例 ○○カンファレンスセンター 3階ホール", show: function () { return S.venue === "rent" || S.venue === "tbd"; } },
-    { type: "text", k: "venueAddr", label: "外部の会場の住所", ph: "例 東京都千代田区○○1-2-3", show: function () { return S.venue === "rent"; } },
-    { type: "number", k: "venueRate", label: "会場費 1日あたりの料金(税抜、なければ0)", suf: "円", show: function () { return S.venue === "rent"; } },
-    { type: "number", k: "venueExtra", label: "会場費 合計で払う費用(税抜。設営、清掃、付帯設備、パック料金など。なければ0)", suf: "円", show: function () { return S.venue === "rent"; } },
-    { type: "text", k: "venueExtraNote", label: "合計で払う費用の内容(任意)", ph: "例 プロジェクター・音響の利用料、前日搬入", show: function () { return S.venue === "rent"; } },
-    { type: "seg", k: "judgeSame", label: "審査会場", o: [[true, "イベントの会場と同じ"], [false, "別の場所"]] },
-    { type: "text", k: "judgeVenueName", label: "審査会場の名前や場所", ph: "例 御社 本社 会議室A", show: function () { return !S.judgeSame; } },
-    { type: "number", k: "judgeVenueCost", label: "審査会場の費用(なしは0、税抜)", suf: "円", show: function () { return !S.judgeSame; } },
-    { type: "multi", k: "meals", label: "食事(1日あたり)", o: [["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ["snack", "軽食と飲み物"]] },
-    { type: "toggle", k: "party", label: "懇親会(1回)" },
-    { type: "seg", k: "partyVenueOther", label: "懇親会の会場", o: [[false, "審査会場と同じ"], [true, "別の場所"]], show: function () { return S.party; } },
-    { type: "info", html: function () { return "懇親会は " + esc(partyVenue()) + " で行います。"; }, show: function () { return S.party && !S.partyVenueOther; } },
-    { type: "text", k: "partyVenueName", label: "懇親会の会場(名前や場所)", ph: "例 会場近くの○○レストラン", show: function () { return S.party && S.partyVenueOther; } },
-    { type: "step", k: "corp", label: "食事をとる御社の社員", min: 0, max: 50, step: 1, suf: "人" },
-
+  { t: "開催までの準備", sub: "成果物ごとに、Nativiaが作るか御社で作るかを選ぶ", c: [
+    { type: "deliv" }
+  ] },
+  { t: "当日の運営と開催後", c: [
+    { type: "toggle", k: "review", label: "評価レポート(参加者ごとの評価と講評)" },
+    { type: "roles" },
+    { type: "info", html: function () { var a = []; for (var i = 0; i < nDays(); i++) a.push((i + 1) + "日目 " + hfmt(workH(i))); return "スタッフの稼働は開催時間に準備と片付けの" + P.extra_h + "時間を足して自動で計算します <em>" + a.join(" / ") + "</em>"; } },
+    { type: "seg", k: "mc", label: "司会", o: [["社内", "Nativiaが担当"], ["御社", "御社で担当"]] },
+    { type: "toggle", k: "movie", label: "撮影と当日編集のエンディングムービー" },
+    { type: "toggle", k: "follow", label: "開催後の採用フォロー" }
   ] },
   { t: "賞金と審査", sub: "実費", c: [
     { type: "row", c: [
@@ -537,9 +532,6 @@ var SECTIONS = [
   { t: "制作物", sub: "実費。開催前の資料は電子で配るため含めない", c: [
     { type: "multi", k: "pr", none: true, label: "Nativiaが用意する制作物", o: [["name", "名札とストラップ"], ["sign", "会場の案内表示"], ["panel", "バックパネル"], ["board", "賞金パネル"], ["tshirt", "Tシャツ"], ["sticker", "ステッカー"], ["tote", "トートバッグ"]] }
   ] },
-  { t: "金額の確定", sub: "実費の項目ごとに、確定か見込みかと、確定する時期の目安を選ぶ", c: [
-    { type: "confirm" }
-  ] },
   { t: "支払条件と備考", c: [
     { type: "number", k: "discAmt", label: "全体からのお値引き(税抜、なしは0)", suf: "円" },
     { type: "text", k: "discNote", label: "お値引きの理由(見積書に表示、任意)", ph: "例 初回のお取引のため" },
@@ -547,6 +539,17 @@ var SECTIONS = [
     { type: "number", k: "depositPct", label: "着手金の割合(代行費に対して)", suf: "%", show: function () { return S.depositOn; } },
     { type: "seg", k: "balance", label: "残金の支払期限", o: opts(["開催月の翌月末", "請求から30日以内", "開催日の前日"]) },
     { type: "text", k: "note", label: "備考(必要なときだけ)", ph: "例 会場は御社で手配いただく想定です" }
+  ] },
+  { t: "金額の確定", sub: "実費の項目ごとに、確定か見込みかと、確定する時期の目安を選ぶ", c: [
+    { type: "confirm" }
+  ] },
+  { t: "書類の設定", sub: "発行日、有効期限、発行者の名義", c: [
+    { type: "row", c: [
+      { type: "date", k: "issue", label: "発行日" },
+      { type: "seg", k: "validity", label: "有効期限", o: opts([[14, "14日"], [30, "30日"], [60, "60日"]]) }
+    ] },
+    { type: "seg", k: "issuer", label: "発行者の名義", o: [["pre", "設立準備中"], ["reg", "登記後"]] },
+    { type: "text", k: "invoice", label: "インボイス登録番号(登録後に入力)", show: function () { return S.issuer === "reg"; }, ph: "T1234567890123" }
   ] }
 ];
 
@@ -587,6 +590,7 @@ function ctl(c) {
     case "seg": return '<div class="field" role="group" aria-label="' + esc(c.label) + '">' + lab + '<div class="chips">' + c.o.map(function (o, i) {
         return '<button type="button" class="chip" data-seg="' + c.k + '" data-i="' + i + '" aria-pressed="' + (S[c.k] === o[0]) + '">' + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</button>";
       }).join("") + "</div></div>";
+    case "reach": return reachHtml();
     case "campus":
       var cN = univList().length, cS = campusStudents();
       return '<div class="field" role="group" aria-label="広告するキャンパス"><div class="lab"><span>広告するキャンパス</span>' + (cN ? "<em>選択中 " + cN + "か所" + (cS ? "、通う学生 約" + num(cS) + "人" : "") + "</em>" : "") + "</div>" +
@@ -659,8 +663,8 @@ var STEPS = {};
 SECTIONS.forEach(function (s) { (function walk(cs) { cs.forEach(function (c) { if (c.type === "row") walk(c.c); if (c.type === "step") STEPS[c.k] = c; if (c.type === "seg") STEPS["seg_" + c.k] = c; }); })(s.c); });
 
 function renderForm() {
-  var html = SECTIONS.map(function (s) {
-    return '<section class="sec"><h2>' + esc(s.t) + (s.sub ? "<small>" + esc(s.sub) + "</small>" : "") + "</h2>" + s.c.map(ctl).join("") + "</section>";
+  var html = SECTIONS.map(function (s, i) {
+    return '<section class="sec"><h2>' + (i + 1) + ". " + esc(s.t) + (s.sub ? "<small>" + esc(s.sub) + "</small>" : "") + "</h2>" + s.c.map(ctl).join("") + "</section>";
   }).join("");
   html += '<details class="prices" id="priceBox"><summary>単価表(仮置きを含む。変更はこのブラウザに保存)</summary><div class="ptable">' +
     PRICE_DEFS.map(function (g) {
@@ -686,6 +690,7 @@ form.addEventListener("click", function (e) {
   else if (b.dataset.open) { S.open[b.dataset.open] = !S.open[b.dataset.open]; }
   else if (b.dataset.dv) { S.dv[b.dataset.dv] = b.dataset.v; }
   else if (b.dataset.dcnt) { var dc = DCNT[b.dataset.dcnt]; S[dc.k] = Math.min(dc.max, Math.max(dc.min, S[dc.k] + dc.step * +b.dataset.d)); }
+  else if (b.dataset.reachkpi) { var rr0 = reachTotals(reachRows()); S.kpiReach = Math.round(rr0.views[1]); S.kpiApps = Math.round(rr0.apps[1]); if (S.kpiApps > 0) S.apps = Math.max(10, Math.ceil(S.kpiApps / 10) * 10); }
   else if (b.dataset.infladd) { S.infl.push({ n: "", sns: "X", f: 0, fee: 0 }); }
   else if (b.dataset.infldel) { S.infl.splice(+b.dataset.infldel, 1); }
   else if (b.dataset.none) { Object.keys(S[b.dataset.none]).forEach(function (k) { S[b.dataset.none][k] = false; }); }
@@ -813,7 +818,7 @@ var DELIV = [
     { k: "lp", name: "告知ページ", unit: "ページ", pk: "d_lp", def: "none" },
     { k: "form", name: "申込フォームと自動返信", unit: "式", pk: "d_form", def: "none" },
     { k: "visual", name: "告知画像(SNS・Web用)", unit: "点", pk: "d_visual", def: "none", cnt: { k: "visN", label: "画像の数", min: 1, max: 20, step: 1, suf: "点" } },
-    { k: "flyer", name: "大学での広告 チラシとポスター(デザイン、印刷、掲示の申請、掲示と配布、撤去)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
+    { k: "flyer", name: "大学での広告 チラシとポスターの制作(デザインと印刷)", unit: "キャンパス", pk: "d_flyer_univ", def: "none", qty: function () { return univList().length || S.flyerU; }, cnt: { k: "flyerU", label: "掲示するキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
     { k: "tate", name: "大学での立て看板(デザイン、制作、設置、撤去)", unit: "キャンパス", pk: "d_tate_univ", def: "none", qty: function () { return univList().length || S.tateU; }, cnt: { k: "tateU", label: "立てるキャンパスの数", min: 1, max: 30, step: 1, suf: "か所" }, auto: function () { return univList().length; } },
     { k: "sns", name: "SNSの告知投稿", unit: "投稿", pk: "d_sns", def: "none", cnt: { k: "posts", label: "投稿の数", min: 1, max: 40, step: 1, suf: "投稿" } },
     { k: "apps", name: "申込者の管理(問い合わせ対応、リマインド、参加確定の連絡)", unit: "20人", pk: "d_apps", def: "none", qty: function () { return Math.ceil(S.apps / 20); }, cnt: { k: "apps", label: "申込者の見込み", min: 10, max: 1000, step: 10, suf: "人" } },
@@ -852,7 +857,7 @@ function basisFor(x) {
     [/^告知ページ/, function () { return "外注の相場は、ノーコードの格安プランで5万〜10万円(構成と文章は含まない)、構成や文章まで含めると10万〜60万円です。Nativiaは文章を書いてノーコードで作るため、その間の15万円にしています。"; }],
     [/^申込フォーム/, function () { return "外注の相場は、自動返信と申込の記録まで含めて1万〜2万円です。その上限にしています。"; }],
     [/^告知画像/, function () { return "静止画のバナー1枚の外注相場は3,000〜1万円です。その上限にしています。"; }],
-    [/^大学での広告/, function () { return "1キャンパスあたりの金額です。内訳の目安は、チラシとポスターのデザイン(複数キャンパスで共通、1.5万〜5万円の相場の一部)、ポスター数枚とチラシ200枚の印刷(約5,000円)、大学への掲示の申請と学内での掲示・配布・撤去(約8時間、1時間2,000円で約1万6,000円)、移動(約2,000円)です。大学内のポスター広告は、大学生協などの掲示枠で1枚1か月5万円(税別)、大学が直接募集する掲示枠でA3ポスター1枚1か月1万6,500円(税込)の例があり、それと同じくらいの水準にしています。"; }],
+    [/^大学での広告/, function () { return "1キャンパスあたり、チラシとポスターの制作にかかる金額です。デザイン(複数キャンパスで共通、フリーランスの相場1.5万〜5万円の一部)と、ポスター数枚・チラシ200枚の印刷(約5,000円)を合わせ、1キャンパス2万円にしています。"; }],
     [/^大学での立て看板/, function () { return "自立式の看板の制作相場は2万〜15万円です。学内用の簡易な立て看板(板と出力したシート)は材料と出力で約2万円、設置と撤去に2人で延べ約12時間(1時間2,000円で2万4,000円)、運搬に約6,000円かかり、デザインを含めて1キャンパスあたり5万円にしています。立て看板は大学の許可が必要で、公認の学生団体の名義でしか出せない大学もあります。"; }],
     [/^SNSの告知投稿/, function () { return "画像を含む投稿の制作は、個人への依頼で1投稿2,500〜7,000円の例があります。その間の5,000円にしています。"; }],
     [/^申込者の管理/, function () { return "申込者1人あたり、受付の確認、リマインド2回、問い合わせへの対応で約15分かかると見込み、20人で約5時間、1時間2,000円として1万円にしています。"; }],
@@ -1117,6 +1122,96 @@ function renderPaper() {
     "<span>人件費を引いた粗利 <b>" + yen(gross) + "(" + Math.round(rate * 100) + "%)</b></span>";
 }
 
+
+
+/* ---------- 集客の見込み(閲覧数と応募数) ----------
+   割合は sales/集客レポート/換算率の仮置き.json と同じ。[低, 中, 高]。根拠のないものは実績で置き換える */
+var RATE = {
+  apply: [0.05, 0.10, 0.20],            // 告知ページを開いた人のうち応募する割合
+  club: [0.01, 0.03, 0.05],             // 学生団体の告知を見た人のうち応募する割合(根拠なし)
+  seeFlyer: [0.005, 0.01, 0.02],        // キャンパスの学生のうちチラシとポスターを見る割合(根拠なし)
+  seeTate: [0.02, 0.05, 0.10],          // 立て看板を見る割合(根拠なし)
+  qrOpen: [0.02, 0.05, 0.10],           // 掲示物を見た人のうち告知ページを開く割合(根拠なし)
+  adCpm: [1500, 1000, 500],             // SNS広告の1,000回表示あたりの費用(根拠なし)
+  adCtr: [0.005, 0.0075, 0.01],         // SNS広告のクリック率(Instagram 教育分野 0.5〜1.0%)
+  followerSee: [0.10, 0.20, 0.30],      // フォロワーのうち投稿を見る割合(根拠なし)
+  postOpen: [0.005, 0.01, 0.02],        // 投稿を見た人のうち告知ページを開く割合(根拠なし)
+  mediaPv: [0.024, 0.03, 0.038],        // 媒体のコンテストページを見た人のうち応募する割合(ビジコンDBの実績)
+  listCtr: [0.002, 0.0035, 0.005]       // 媒体の表示から記事を開く割合(登竜門バナーの目安0.2〜0.5%を流用)
+};
+/* 媒体ごとの量。views は [低,中,高]、kind は "pv"(ページの閲覧)か "imp"(表示回数)。perMonth は掲載月数を掛ける */
+var MEDIA_REACH = {
+  bizcon_light: { views: [600, 850, 1000], kind: "pv", perMonth: true, src: "ビジコンDB実績 2か月でPV1,700" },
+  bizcon_premium: { views: [2000, 2100, 2200], kind: "pv", perMonth: true, src: "ビジコンDB実績 1か月でPV2,200、2か月でPV4,100" },
+  toryumon_1day: { views: [2300, 2500, 2700], kind: "imp", src: "登竜門 1日約2,300〜2,700回表示" },
+  toryumon_1week: { views: [15000, 16000, 17000], kind: "imp", src: "登竜門 1週間約1万5,000〜1万7,000回表示" },
+  toryumon_2week: { views: [30000, 32000, 34000], kind: "imp", src: "登竜門 1weekの2倍で見込み" },
+  toryumon_banner: { views: [130000, 160000, 190000], kind: "imp", src: "登竜門 4週間で13万〜19万回表示" },
+  toryumon_mail: { views: [26000, 26000, 26000], kind: "imp", src: "登竜門 メルマガ約2万6,000部" },
+  koubo_sns: { views: [200000, 250000, 300000], kind: "snsimp", src: "公募ガイド社 広告費10万円で20万〜30万回表示、クリック率1〜3%" },
+  connpass_sp: { views: [110000, 110000, 110000], kind: "banner", perMonth: true, src: "connpass 月11万回表示、クリック率0.03〜0.07%" },
+  connpass_pc: { views: [740000, 740000, 740000], kind: "banner", perMonth: true, src: "connpass 月74万回表示、クリック率0.03〜0.07%" }
+};
+function mul(a, b) { return [a[0] * b[0], a[1] * b[1], a[2] * b[2]]; }
+function scal(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
+function reachRows() {
+  var r = [], unknown = [];
+  function add(ch, name, views, apps, note) { r.push({ ch: ch, name: name, views: views, apps: apps, note: note || "" }); }
+  if (S.promo.own) clubNames().forEach(function (c) {
+    var v = CLUB_VIEWS[c]; if (!v) { unknown.push(c + "(閲覧数が未確認)"); return; }
+    add("学生団体", c, [v, v, v], scal(RATE.club, v), "団体からの聞き取り");
+  });
+  var fl = dvOn("flyer"), tt = dvOn("tate");
+  if (S.promo.univ || fl || tt) CAMPUS.forEach(function (c) {
+    if (!S.univSel[campKey(c)]) return;
+    if (!c[2]) { unknown.push(campKey(c) + "(学生数が不明)"); return; }
+    if (!fl && !tt) { unknown.push(campKey(c) + "(チラシか立て看板を選ぶと計算できます)"); return; }
+    var see = [0, 0, 0]; if (fl) see = see.map(function (x, i) { return x + RATE.seeFlyer[i]; }); if (tt) see = see.map(function (x, i) { return x + RATE.seeTate[i]; });
+    var v = scal(see, c[2]);
+    add("大学での広告", campKey(c), v, mul(mul(v, RATE.qrOpen), RATE.apply), "通う学生 約" + num(c[2]) + "人");
+  });
+  if (S.promo.ads) {
+    if (!S.adsAmt) unknown.push("SNS広告(予算が未選択)");
+    else { var imp = RATE.adCpm.map(function (c) { return S.adsAmt / c * 1000; }); add("SNS広告", "予算 " + num(S.adsAmt) + "円", imp, mul(mul(imp, RATE.adCtr), RATE.apply), "表示回数"); }
+  }
+  if (S.promo.infl) inflRows().forEach(function (x) {
+    if (!x.f) { unknown.push((x.n.trim() || "インフルエンサー") + "(フォロワー数が未入力)"); return; }
+    var v = scal(RATE.followerSee, x.f); add("インフルエンサー", (x.n.trim() || "未定") + " " + x.sns, v, mul(mul(v, RATE.postOpen), RATE.apply), "フォロワー " + num(x.f) + "人");
+  });
+  function mediaRow(list, sel, ch) {
+    list.forEach(function (m) {
+      if (!sel[m[0]]) return; var d = MEDIA_REACH[m[0]];
+      if (!d) { unknown.push(m[1] + "(1回の掲載で見る人数が不明)"); return; }
+      var v = d.perMonth ? scal(d.views, S.adMonths) : d.views, apps;
+      if (d.kind === "pv") apps = mul(v, RATE.mediaPv);
+      else if (d.kind === "snsimp") apps = mul(mul(v, [0.01, 0.02, 0.03]), RATE.apply);
+      else if (d.kind === "banner") apps = mul(mul(v, [0.0003, 0.0005, 0.0007]), RATE.apply);
+      else apps = mul(mul(v, RATE.listCtr), RATE.mediaPv);
+      add(ch, m[1], v, apps, d.src + (d.kind === "pv" ? "(ページの閲覧)" : "(表示回数)"));
+    });
+  }
+  if (S.promo.media) mediaRow(MEDIA, S.mediaSel, "有料媒体");
+  if (S.promo.site) mediaRow(SITES, S.siteSel, "告知サイト");
+  if (dvOn("sns")) unknown.push("SNSの告知投稿(アカウントのフォロワー数が未入力)");
+  return { rows: r, unknown: unknown };
+}
+function rng(a) { var lo = Math.round(a[0]), hi = Math.round(a[2]); return lo === hi ? num(lo) : num(lo) + "〜" + num(hi); }
+function reachTotals(rr) { return rr.rows.reduce(function (t, x) { return { views: t.views.map(function (v, i) { return v + x.views[i]; }), apps: t.apps.map(function (v, i) { return v + x.apps[i]; }) }; }, { views: [0, 0, 0], apps: [0, 0, 0] }); }
+function reachHtml() {
+  if (!S.open.reach) return '<div class="field"><button type="button" class="btn primary" data-open="reach">集客の見込みを計算する</button><div class="hint">選んだ告知から、見る人数と応募数の見込み(少なめ〜多め)を出します。社内用で、見積書には載りません。</div></div>';
+  var rr = reachRows(), t = reachTotals(rr), q = compute();
+  var body = rr.rows.map(function (x) { return "<tr><td>" + esc(x.ch) + "</td><td>" + esc(x.name) + '<div class="hint">' + esc(x.note) + '</div></td><td class="n">' + rng(x.views) + '</td><td class="n">' + rng(x.apps) + "</td></tr>"; }).join("");
+  var appsMid = Math.round(t.apps[1]);
+  var cpa = q.adSum > 0 && appsMid > 0 ? "広告費 " + yen(q.adSum) + " ÷ 応募の見込み " + num(appsMid) + "人 = 応募1人あたり約" + yen(Math.round(q.adSum / appsMid)) + "(税抜)" : "";
+  return '<div class="field"><button type="button" class="btn" data-open="reach">集客の見込みを閉じる ▲</button>' +
+    (rr.rows.length ? '<div class="lwrap"><table class="ltable"><thead><tr><th>やり方</th><th>告知先</th><th>見る人数</th><th>応募</th></tr></thead><tbody>' + body +
+      '<tr><td colspan="2"><b>合計</b></td><td class="n"><b>' + rng(t.views) + '</b></td><td class="n"><b>' + rng(t.apps) + "</b></td></tr></tbody></table></div>" +
+      '<div class="hint">中央の見込みは、見る人数 約' + num(Math.round(t.views[1])) + "人、応募 約" + num(appsMid) + "人、参加学生の定員は" + S.people + "人です。" + (cpa ? " " + esc(cpa) + "。" : "") + "</div>" +
+      '<div class="chips"><button type="button" class="chip" data-reachkpi="1">この見込み(中央)を目標の閲覧数と応募数に入れる</button></div>'
+      : '<div class="hint">計算できる告知がまだ選ばれていません。</div>') +
+    (rr.unknown.length ? '<div class="hint">計算に入れていないもの ' + esc(rr.unknown.join("、")) + "</div>" : "") +
+    '<div class="hint">割合の多くは仮置きで、媒体資料や実績で置き換えていきます(sales/集客レポート/換算率の仮置き.json)。表示回数は見た人数より多めに出ます。</div></div>';
+}
 
 /* ---------- Markdownで書き出す(スケジュールや集客の資料を作るツールに渡す用) ---------- */
 function mdCell(t) { return String(t == null ? "" : t).replace(/\|/g, "／").replace(/\s+/g, " ").trim(); }
