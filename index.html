@@ -323,7 +323,7 @@ var DEFAULTS = {
   promo: { own: false, ads: false, univ: false, site: false, media: false, infl: false },
   dv: {}, visN: 1, posts: 1, apps: 20, briefN: 1,
   adsAmt: null, inflAmt: null,
-  venue: null, venueRate: null,
+  venue: null, venueRate: null, venueRateMode: "day", judgeSame: true,
   meals: { breakfast: false, lunch: false, dinner: false, snack: false }, party: false, corp: 0, stayRate: 0, stayName: "", stayMode: "pp", stayTotal: 0,
   p1: 0, p2: 0, p3: 0, spCount: 0, spAmt: 0, award: { trophy: false, medal: false, cert: false },
   judges: 0, judgeFee: null, travelMode: null, travel: 0, credit: 0,
@@ -342,7 +342,7 @@ var CAMPUS = [["東京大学", "駒場", 8500, "1・2年の教養課程"], ["東
 /* 懇親会は基本的に審査会場と同じ場所で行う。審査会場の入力がなければ、イベントの会場と同じ */
 function partyVenue() {
   if (S.partyVenueOther) return S.partyVenueName.trim() || "未定";
-  if (S.judgeVenueName.trim()) return "審査会場(" + S.judgeVenueName.trim() + ")";
+  if (!S.judgeSame && S.judgeVenueName.trim()) return "審査会場(" + S.judgeVenueName.trim() + ")";
   return "審査会場" + (S.venueName && S.venueName.trim() ? "(" + S.venueName.trim() + ")" : "");
 }
 function campKey(c) { return c[0] + " " + c[1] + "キャンパス"; }
@@ -357,6 +357,7 @@ var FORMATS = { idea: "アイデアソン", hack: "ハッカソン", biz: "ビ�
 
 var S = load("nv_quote_state13", null) || clone(DEFAULTS);
 if (S.promoDays === undefined && S.promoWeeks) S.promoDays = 7 * S.promoWeeks;
+if (S.judgeSame === undefined && S.judgeVenueName && S.judgeVenueName.trim()) S.judgeSame = false;
 Object.keys(DEFAULTS).forEach(function (k) { if (S[k] === undefined) S[k] = clone(DEFAULTS[k]); });
 var savedP = load("nv_quote_prices", {});
 Object.keys(savedP).forEach(function (k) { if (k in P) P[k] = savedP[k]; });
@@ -481,9 +482,12 @@ var SECTIONS = [
     { type: "text", k: "venueName", label: "御社のオフィスの場所(住所、フロア、部屋)", ph: "例 東京都渋谷区○○1-2-3 ○○ビル10階 セミナールーム", show: function () { return S.venue === "office"; } },
     { type: "text", k: "venueName", label: "会場の名前", ph: "例 ○○カンファレンスセンター 3階ホール", show: function () { return S.venue === "rent" || S.venue === "tbd"; } },
     { type: "text", k: "venueAddr", label: "外部の会場の住所", ph: "例 東京都千代田区○○1-2-3", show: function () { return S.venue === "rent"; } },
-    { type: "seg", k: "venueRate", label: "会場の1日の料金", o: opts([[100000, "10万円"], [200000, "20万円"], [300000, "30万円"], [500000, "50万円"]]), show: function () { return S.venue === "rent"; } },
-    { type: "text", k: "judgeVenueName", label: "審査会場(審査を別の場所で行う場合の名前や場所)", ph: "例 御社 本社 会議室A" },
-    { type: "number", k: "judgeVenueCost", label: "審査会場の費用(なしは0)", suf: "円" },
+    { type: "seg", k: "venueRateMode", label: "会場費の入れ方", o: [["day", "1日あたりの料金"], ["total", "合計の金額"]], show: function () { return S.venue === "rent"; } },
+    { type: "number", k: "venueRate", label: "会場費(1日あたり、税抜)", suf: "円", show: function () { return S.venue === "rent" && S.venueRateMode !== "total"; } },
+    { type: "number", k: "venueRate", label: "会場費の合計(税抜)", suf: "円", show: function () { return S.venue === "rent" && S.venueRateMode === "total"; } },
+    { type: "seg", k: "judgeSame", label: "審査会場", o: [[true, "イベントの会場と同じ"], [false, "別の場所"]] },
+    { type: "text", k: "judgeVenueName", label: "審査会場の名前や場所", ph: "例 御社 本社 会議室A", show: function () { return !S.judgeSame; } },
+    { type: "number", k: "judgeVenueCost", label: "審査会場の費用(なしは0、税抜)", suf: "円", show: function () { return !S.judgeSame; } },
     { type: "multi", k: "meals", label: "食事(1日あたり)", o: [["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ["snack", "軽食と飲み物"]] },
     { type: "toggle", k: "party", label: "懇親会(1回)" },
     { type: "seg", k: "partyVenueOther", label: "懇親会の会場", o: [[false, "審査会場と同じ"], [true, "別の場所"]], show: function () { return S.party; } },
@@ -568,7 +572,7 @@ function ctl(c) {
       return '<label class="field" for="' + id + '">' + lab + '<select class="sel" id="' + id + '" data-rel="' + c.k + '">' + o + "</select></label>";
     case "number":
       var nid = id + (c.k === "travel" ? "_" + S.travelMode : "");
-      return '<label class="field" for="' + nid + '">' + lab + '<div style="display:flex;align-items:center;gap:6px"><input class="txt" style="max-width:160px;text-align:right" inputmode="numeric" id="' + nid + '" data-num="' + c.k + '" value="' + esc(S[c.k]) + '"><span>' + esc(c.suf) + "</span></div></label>";
+      return '<label class="field" for="' + nid + '">' + lab + '<div style="display:flex;align-items:center;gap:6px"><input class="txt" style="max-width:160px;text-align:right" inputmode="numeric" id="' + nid + '" data-num="' + c.k + '" value="' + esc(S[c.k] == null ? "" : S[c.k]) + '" placeholder="0"><span>' + esc(c.suf) + "</span></div></label>";
     case "seg": return '<div class="field" role="group" aria-label="' + esc(c.label) + '">' + lab + '<div class="chips">' + c.o.map(function (o, i) {
         return '<button type="button" class="chip" data-seg="' + c.k + '" data-i="' + i + '" aria-pressed="' + (S[c.k] === o[0]) + '">' + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</button>";
       }).join("") + "</div></div>";
@@ -851,7 +855,7 @@ function basisFor(x) {
     [/^開催後の採用フォロー/, function () { return "参加者への連絡と面談設定の支援です。" + STD; }],
     [/^会場費\(目安\)/, function () { return "会場が決まっていないため、1日" + man(P.venue_unknown) + "を目安に置いています。会場が決まったら差し替えます。"; }],
     [/^審査会場費/, function () { return "審査を行う会場" + (S.judgeVenueName.trim() ? "(" + S.judgeVenueName.trim() + ")" : "") + "の料金です。"; }],
-    [/^会場費/, function () { return "ご希望の会場の1日あたりの料金です。"; }],
+    [/^会場費/, function () { var nm = S.venueName.trim() ? S.venueName.trim() + "の" : "ご希望の会場の"; return S.venueRateMode === "total" ? nm + "利用料の合計(" + nDays() + "日分)です。会場からの見積や料金表にもとづく金額です。" : nm + "1日あたりの利用料(" + num(S.venueRate || 0) + "円)に、開催日数を掛けています。"; }],
     [/^昼食/, function () { return "会議やイベント用の弁当は1人500〜1,500円の価格帯が多く、その中間の1,000円にしています。ケータリングにする場合は1人3,000〜5,000円が目安です。"; }],
     [/^(朝食|夕食|軽食と飲み物)/, function () { return "弁当や軽食の一般的な価格帯をもとにした見込みです。"; }],
     [/^懇親会/, function () { return "立食のケータリングは1人3,600〜5,000円が目安です。軽食と飲み物を中心にした見込みとして3,000円にしています。"; }],
@@ -909,8 +913,8 @@ function compute() {
   if (S.follow) L(fee, "開催後の採用フォロー", 1, "式", P.follow, "参加者への連絡と面談設定の支援");
 
   // 実費
-  if (S.venue === "rent") L(cost, "会場費", d, "日", S.venueRate);
-  L(cost, "審査会場費", 1, "式", S.judgeVenueCost, S.judgeVenueName.trim());
+  if (S.venue === "rent") { if (S.venueRateMode === "total") L(cost, "会場費", 1, "式", S.venueRate, d + "日分の合計"); else L(cost, "会場費", d, "日", S.venueRate); }
+  if (!S.judgeSame) L(cost, "審査会場費", 1, "式", S.judgeVenueCost, S.judgeVenueName.trim());
   if (S.venue === "tbd") L(cost, "会場費(目安)", d, "日", P.venue_unknown, "会場の決定後に確定");
   var eaters = S.people + staff + S.corp;
   var mealName = { breakfast: "朝食", lunch: "昼食", dinner: "夕食", snack: "軽食と飲み物" };
@@ -1046,7 +1050,7 @@ function renderPaper() {
       "<dt>開催日時</dt><dd>" + (sc.held || "未定") + "</dd>" +
       "<dt>会場</dt><dd>" + venueTxt + "</dd>" +
       (S.nights ? "<dt>宿泊</dt><dd>" + S.nights + "泊" + (S.stayName.trim() ? "(" + esc(S.stayName.trim()) + ")" : "(宿泊先は未定)") + "</dd>" : "") +
-      (S.judgeVenueName.trim() ? "<dt>審査会場</dt><dd>" + esc(S.judgeVenueName.trim()) + "</dd>" : "") +
+      "<dt>審査会場</dt><dd>" + (S.judgeSame ? "イベントの会場と同じ" : esc(S.judgeVenueName.trim() || "別の場所(未定)")) + "</dd>" +
       "<dt>参加学生</dt><dd>" + S.people + "人(" + S.team + "人×" + teams() + "チーム)</dd>" +
       "<dt>運営体制</dt><dd>当日スタッフ 計" + q.staff + "人(" + roleText() + ")<br>司会 " + (S.mc === "御社" ? "御社" : S.mc === "社内" ? "Nativiaのディレクター" : "未定") + " / チームの巡回 御社の社員の方</dd>" +
       (targetText() ? "<dt>ターゲット</dt><dd>" + esc(targetText()) + "</dd>" : "") +
@@ -1151,7 +1155,7 @@ function opsMd() {
     ["形式", fmtName()], ["開催方法", S.mode || "未定"], ["参加学生", S.people + "人(" + S.team + "人×" + teams() + "チーム)"],
     ["申込者の見込み", S.apps + "人"], ["宿泊", S.nights ? S.nights + "泊(" + (S.stayName.trim() || "宿泊先は未定") + ")" : "なし"],
     ["会場", (S.venue ? optLabel("venue", S.venue) : "未定") + (S.venueName.trim() ? " " + S.venueName.trim() : "") + (S.venue === "rent" && S.venueAddr.trim() ? "(" + S.venueAddr.trim() + ")" : "")],
-    ["審査会場", S.judgeVenueName.trim() || "イベントの会場と同じ"],
+    ["審査会場", S.judgeSame ? "イベントの会場と同じ" : (S.judgeVenueName.trim() || "別の場所(未定)")],
     ["懇親会", S.party ? "あり。会場は" + partyVenue() : "なし"],
     ["食事", onList("meals").join("、") || "なし"],
     ["司会", S.mc === "御社" ? "御社" : S.mc === "社内" ? "Nativiaのディレクター" : "未定"],
@@ -1258,6 +1262,7 @@ function applyQuote(data) {
   if (data.v === 2) {
     S = clone(LINK_BASE_2); Object.keys(data.d).forEach(function (k) { S[k] = data.d[k]; }); S.issue = data.i;
     if (data.d.promoDays == null) S.promoDays = 7 * S.promoWeeks;
+    if (data.d.judgeSame == null && (S.judgeVenueName || "").trim()) S.judgeSame = false;
     PRICE_ORDER_2.forEach(function (k, i) { P[k] = data.p[i] != null ? data.p[i] : PRICE_BASE_2[i]; });
     PRICE_DEFS.forEach(function (g) { g[1].forEach(function (d) { if (PRICE_ORDER_2.indexOf(d[0]) < 0) P[d[0]] = data.x && data.x[d[0]] != null ? data.x[d[0]] : d[2]; }); });
     viewerNo = data.n;
