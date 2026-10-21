@@ -263,17 +263,28 @@ var PRICE_DEFS = [
     ["m_wantedly_month", "Wantedly 月額(ライトプラン・最短6か月)", 65000],
     ["m_paiza", "paiza新卒", 0],
     ["m_bizcon_free", "ビジコンDB 無料掲載", 0],
-    ["m_bizcon_light", "ビジコンDB 広告ライト(月額)", 50000],
-    ["m_bizcon_premium", "ビジコンDB 広告プレミアム(月額)", 100000],
+    ["m_bizcon_light", "ビジコンDB 広告ライト(月額、税込5万円)", 45455],
+    ["m_bizcon_premium", "ビジコンDB 広告プレミアム(月額、税込10万円)", 90909],
     ["m_toryumon_free", "登竜門 無料掲載", 0],
-    ["m_toryumon_pickup", "登竜門 注目プラン", 200000],
-    ["m_koubo_new", "公募ガイドONLINE おすすめ新着(2週間)", 100000]
+    ["m_toryumon_1day", "登竜門 募集要項広告 1dayプラン", 100000],
+    ["m_toryumon_1week", "登竜門 募集要項広告 1weekプラン", 250000],
+    ["m_toryumon_2week", "登竜門 募集要項広告 2weekプラン", 350000],
+    ["m_toryumon_pickup", "登竜門 注目プラン(掲載済みの記事に追加)", 200000],
+    ["m_toryumon_last", "登竜門 締切直前プラン", 250000],
+    ["m_toryumon_mail", "登竜門 メルマガ広告(1回)", 30000],
+    ["m_toryumon_banner", "登竜門 バナー広告", 400000],
+    ["m_koubo_new", "公募ガイドONLINE おすすめ新着(2週間)", 100000],
+    ["m_koubo_free", "公募ガイドONLINE 無料掲載(Kouboプランナー ライト)", 0],
+    ["m_koubo_sns", "公募ガイド社のSNS広告(広告費)", 100000],
+    ["m_supporterz_seminar", "サポーターズ 合同セミナー(1回)", 800000]
   ]],
   ["イベント告知サイト(1回の告知)", [
     ["s_connpass", "connpass", 0],
     ["s_techplay", "TECH PLAY", 0],
     ["s_peatix", "Peatix(無料イベント)", 0],
-    ["s_doorkeeper_month", "Doorkeeper 月額", 1650]
+    ["s_connpass_sp_month", "connpass バナー広告 スマホ上部(30日)", 150000],
+    ["s_connpass_pc_month", "connpass バナー広告 PCサイドバー右上(30日)", 580000],
+    ["s_connpass_fee", "connpass バナー広告 事務手数料(掲載開始の5営業日前までに発注すれば0円、遅れると8万円)", 0]
   ]],
   ["食事・会場", [
     ["breakfast", "朝食(1人1回)", 800],
@@ -713,32 +724,41 @@ var MEDIA = [
   ["wantedly", "Wantedly", "monthly", "ライトプランの月額。契約は最短6か月"],
   ["paiza", "paiza新卒", "m_paiza", "インターンやイベントの掲載は無料(採用時の成果報酬は別)"],
   ["bizcon_free", "ビジコンDB 無料掲載", "m_bizcon_free", "ビジネスコンテストのデータベースに無料で掲載(掲載の可否は運営が判断)"],
-  ["bizcon_light", "ビジコンDB 広告ライト", "monthly", "サイト内の3か所に広告を出すプラン(月額)"],
-  ["bizcon_premium", "ビジコンDB 広告プレミアム", "monthly", "広告の上位プラン(月額)"],
-  ["bizcon_direct", "ビジコンDB 直接集客プラン", null, "料金は見積が必要"],
+  ["bizcon_light", "ビジコンDB 広告ライト", "monthly", "トップページ2か所と全コンテストページの右側に掲載(月額税込5万円。クリックが333回に届かなければ1クリック150円で請求)"],
+  ["bizcon_premium", "ビジコンDB 広告プレミアム", "monthly", "ライトの掲載先に加え、人気記事の上部に掲載(月額税込10万円。クリックが666回に届かなければ1クリック150円で請求)"],
+  ["bizcon_direct", "ビジコンDB 直接集客プラン", null, "条件に合う学生のリストにメールで参加を依頼する。料金は見積が必要"],
   ["toryumon_free", "登竜門 無料掲載", "m_toryumon_free", "コンテスト情報サイトに無料で掲載(掲載の可否と時期は編集部が判断)"],
-  ["toryumon_pickup", "登竜門 注目プラン", "m_toryumon_pickup", "掲載日を指定できる広告掲載(20万円から、税抜)"],
-  ["koubo_new", "公募ガイドONLINE おすすめ新着", "m_koubo_new", "公募・コンテスト情報サイトのおすすめ新着枠(2週間)"],
+  ["toryumon_1day", "登竜門 募集要項広告 1dayプラン", "m_toryumon_1day", "トップ新着枠に1日、カテゴリーPR枠に2週間掲載(1日あたり約2,300〜2,700回表示)"],
+  ["toryumon_1week", "登竜門 募集要項広告 1weekプラン", "m_toryumon_1week", "トップ新着枠に1週間掲載、Xでも配信(1週間で約1万5,000〜1万7,000回表示)"],
+  ["toryumon_2week", "登竜門 募集要項広告 2weekプラン", "m_toryumon_2week", "トップ新着枠に2週間掲載、Xでも配信"],
+  ["toryumon_pickup", "登竜門 注目プラン", "m_toryumon_pickup", "掲載済みの記事を、トップの注目枠に1週間掲載"],
+  ["toryumon_last", "登竜門 締切直前プラン", "m_toryumon_last", "締切の5週前から1回だけ。全ページの締切直前枠に1週間、Xとメルマガでも配信"],
+  ["toryumon_mail", "登竜門 メルマガ広告", "m_toryumon_mail", "毎週金曜配信のメルマガ(約2万6,000部)のヘッダー枠に1回掲載"],
+  ["toryumon_banner", "登竜門 バナー広告", "m_toryumon_banner", "4週間で13万〜19万回表示、クリック率の目安0.2〜0.5%"],
+  ["koubo_new", "公募ガイドONLINE おすすめ新着", "m_koubo_new", "公募・コンテスト情報サイトのおすすめ新着枠(2週間)。媒体資料に価格がなく、公開情報の金額"],
+  ["koubo_free", "公募ガイドONLINE 無料掲載", "m_koubo_free", "公募ガイド社の募集ツール Kouboプランナー(ライトプラン、無料)から掲載する"],
+  ["koubo_sns", "公募ガイド社のSNS広告", "m_koubo_sns", "公募ガイド社のInstagramとXで配信。広告費10万円で20万〜30万回表示、クリック率1〜3%が平均"],
   ["goodfind", "Goodfind", null, "料金は公開されていないため、見積が必要"],
   ["gaishi", "外資就活ドットコム", null, "料金は公開されていないため、見積が必要"],
-  ["supporterz", "サポーターズ", null, "固定費0円の成果報酬型。イベント集客の条件は見積が必要"],
+  ["supporterz", "サポーターズ 合同セミナー", "m_supporterz_seminar", "サポーターズが開くオンラインの合同セミナーに出展する(1回、最大4社、参加学生50〜80名)。Nativiaのイベントの告知枠ではない"],
   ["labbase", "LabBase", null, "月額のデータベース料金。金額は見積が必要"]
 ];
 var SITES = [
   ["connpass", "connpass", "s_connpass", "主催者も参加者も無料。エンジニア向けの勉強会やハッカソンの告知に多く使われる"],
   ["techplay", "TECH PLAY", "s_techplay", "イベントページの作成と公開は無料"],
   ["peatix", "Peatix", "s_peatix", "無料イベントは手数料なし(有料チケットはチケット代の4.9%+99円)"],
-  ["doorkeeper", "Doorkeeper", "monthly", "月額制(最も安いプラン)"],
+  ["connpass_sp", "connpass バナー広告(スマホ上部)", "monthly", "検索結果や新着一覧などの上部に掲載。月11万回表示が目安。最短7日から日割り"],
+  ["connpass_pc", "connpass バナー広告(PCサイドバー右上)", "monthly", "イベント詳細や検索結果の右上に掲載。月74万回表示が目安。最短7日から日割り"],
   ["techplay_brand", "TECH PLAY 法人向けの露出強化", null, "料金は公開されていないため、見積が必要"]
 ];
 /* 媒体とサイトの利用者数(公開情報)。入力画面に備考として出す */
-var REACH_NOTE = {"onecareer": "利用者 累計240万人超", "mynavi": "登録学生 約80万人", "paiza": "paiza全体の利用者 60万人超", "bizcon_free": "ビジコンDB 掲載コンテスト700件超", "bizcon_light": "ビジコンDB 掲載コンテスト700件超", "bizcon_premium": "ビジコンDB 掲載コンテスト700件超", "bizcon_direct": "ビジコンDB 掲載コンテスト700件超", "toryumon_free": "年に2,000件以上のコンテストを紹介", "toryumon_pickup": "年に2,000件以上のコンテストを紹介", "koubo_new": "掲載情報が年に2万件以上", "gaishi": "エンジニア向けの姉妹サービスに27卒8,000人超", "labbase": "登録学生 約9万人", "techplay": "会員30万人超(社会人も含む)", "peatix": "利用者840万人以上(学生以外も含む)", "techplay_brand": "会員30万人超(社会人も含む)"};
+var REACH_NOTE = {"onecareer": "利用者 累計240万人超", "mynavi": "登録学生 約80万人", "paiza": "paiza全体の利用者 60万人超", "bizcon_free": "ビジコンDB 月間2万PV、18〜24歳が38%", "bizcon_light": "ビジコンDB 月間2万PV、18〜24歳が38%", "bizcon_premium": "ビジコンDB 月間2万PV、18〜24歳が38%", "bizcon_direct": "ビジコンDB 月間2万PV、18〜24歳が38%", "toryumon_free": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "toryumon_pickup": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "koubo_new": "公募ガイドONLINE 月間50万UU・250万PV(30〜40代の女性が中心、18〜24歳は15.8%)", "gaishi": "エンジニア向けの姉妹サービスに27卒8,000人超", "labbase": "登録学生 約9万人", "techplay": "会員30万人超(社会人も含む)", "peatix": "年間の参加者560万人(18〜24歳は15.4%)", "techplay_brand": "会員30万人超(社会人も含む)", "toryumon_1day": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "toryumon_1week": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "toryumon_2week": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "toryumon_last": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "toryumon_mail": "メルマガ 約2万6,000部", "toryumon_banner": "登竜門 月間13.8万UU・105.8万PV、読者の23%が学生", "koubo_free": "公募ガイドONLINE 月間50万UU・250万PV(18〜24歳は15.8%)", "koubo_sns": "10代後半〜20代に届きやすい", "supporterz": "登録学生の75%が情報系・機電系", "connpass_sp": "connpass 月間37万UU・273万PV(2021年5月時点)", "connpass_pc": "connpass 月間37万UU・273万PV(2021年5月時点)"};
 var WHEN = [["contract", "契約時"], ["venue", "会場の決定時"], ["close", "申込の締切日"], ["week", "開催の1週間前"], ["day", "開催当日"], ["after", "開催後の精算時"], ["quote", "媒体などからの見積の受領時"]];
 var CONF_RULES = [
   [/^(会場費|審査会場費)/, false, "venue"], [/^(朝食|昼食|夕食|軽食と飲み物|懇親会|宿泊費|名札)/, false, "close"],
   [/^(賞金|外部の審査員|AIやクラウド|学生団体|SNS広告費|インフルエンサー|告知サイト)/, true, "contract"],
   [/^参加者の交通費/, false, "after"], [/(Nativiaの備品|消耗品)/, true, "contract"],
-  [/^掲載料/, false, "quote"], [/.*/, false, "week"]
+  [/^掲載料/, false, "contract"], [/.*/, false, "week"]
 ];
 function confOf(x) {
   var r = CONF_RULES.filter(function (c) { return c[0].test(x.name); })[0];
@@ -775,7 +795,7 @@ function kpiText(forForm) {
 }
 function listNames(t) { var a = []; (t || "").split(/[、,，]+/).forEach(function (x) { if (x.trim()) a.push(x.trim()); }); return a; }
 var DISCS = [[0, "値引きなし"], [10, "10%値引き"], [20, "20%値引き"], [30, "30%値引き"], [50, "50%値引き"], [100, "今回は特別に無料"]];
-var MONTHLY = { bizcon_light: { month: "m_bizcon_light", min: 1 }, bizcon_premium: { month: "m_bizcon_premium", min: 1 }, onecareer: { init: "m_onecareer_init", month: "m_onecareer_month", min: 1 }, wantedly: { month: "m_wantedly_month", min: 6 }, doorkeeper: { month: "s_doorkeeper_month", min: 1 } };
+var MONTHLY = { connpass_sp: { month: "s_connpass_sp_month", init: "s_connpass_fee", min: 1 }, connpass_pc: { month: "s_connpass_pc_month", init: "s_connpass_fee", min: 1 }, bizcon_light: { month: "m_bizcon_light", min: 1 }, bizcon_premium: { month: "m_bizcon_premium", min: 1 }, onecareer: { init: "m_onecareer_init", month: "m_onecareer_month", min: 1 }, wantedly: { month: "m_wantedly_month", min: 6 } };
 function adCost(m) {
   if (m[2] !== "monthly") return { amt: P[m[2]], note: m[3] };
   var c = MONTHLY[m[0]], mo = Math.max(S.adMonths, c.min);
