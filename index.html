@@ -593,7 +593,10 @@ function ctl(c) {
       }).join("") + "</div></div>";
     case "reach": return reachHtml();
     case "snsads":
-      return '<div class="field"><div class="lab"><span>SNS広告(媒体ごとの広告費)</span>' + (snsAdTotal() ? "<em>広告費 計" + yen(snsAdTotal()) + "+運用手数料" + P.sns_fee_pct + "%</em>" : "") + "</div>" + SNS_ADS.map(function (m) {
+      var snN = SNS_ADS.filter(function (m) { return (S.snsAds || {})[m[0]]; }).length;
+      var snHead = "(選択中 " + snN + "媒体" + (snsAdTotal() ? "、広告費 計" + yen(snsAdTotal()) : "") + ")";
+      if (!S.open.sns) return '<div class="field"><button type="button" class="btn" data-open="sns" style="text-align:left">SNS広告の媒体と広告費を選ぶ' + snHead + '▼</button></div>';
+      return '<div class="field"><button type="button" class="btn" data-open="sns" style="text-align:left">SNS広告の一覧を閉じる' + snHead + '▲</button>' + SNS_ADS.map(function (m) {
         var cur = (S.snsAds || {})[m[0]] || 0;
         return '<div style="padding:6px 0;border-top:1px solid var(--line)"><div style="font-size:13px;font-weight:700">' + m[1] + ' <span class="hint" style="font-weight:400">' + esc(m[3]) + '</span></div><div class="chips">' +
           [[0, "使わない"], [50000, "5万円"], [100000, "10万円"], [200000, "20万円"], [300000, "30万円"]].map(function (o) { return '<button type="button" class="chip" data-snsad="' + m[0] + '" data-v="' + o[0] + '" aria-pressed="' + (cur === o[0]) + '">' + o[1] + (o[0] ? "<small>約" + num(Math.round(o[0] / m[2][1] * 1000 / 1000) * 1000) + "回表示</small>" : "") + "</button>"; }).join("") + "</div></div>";
@@ -799,10 +802,10 @@ function targetText() {
 }
 function kpiText(forForm) {
   var r = S.kpiReach, a = S.kpiApps, n = S.people, parts = [];
-  if (!r && !a) return forForm ? '<span id="kpiHint">閲覧数と応募数を入れると、応募率と参加率を計算します(参加数は参加学生の人数)</span>' : "";
+  if (!r && !a) return forForm ? '<span id="kpiHint">閲覧数と応募数を入れると、応募率と参加倍率(応募数÷参加学生の人数)を計算します</span>' : "";
   if (r) parts.push("閲覧 " + num(r) + "人");
   if (a) parts.push("応募 " + num(a) + "人" + (r ? "(応募率 " + (Math.round(a / r * 1000) / 10) + "%)" : ""));
-  parts.push("参加 " + num(n) + "人" + (a ? "(参加率 " + (Math.round(n / a * 1000) / 10) + "%)" : ""));
+  parts.push("参加 " + num(n) + "人" + (a ? "(参加倍率 " + (Math.round(a / n * 10) / 10) + "倍)" : ""));
   var t = parts.join(" → ");
   return forForm ? '<span id="kpiHint">' + t + "</span>" : t;
 }
